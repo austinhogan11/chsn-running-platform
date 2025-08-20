@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.pytest_cache/
+.mypy_cache/
+.coverage
+
+# OS / tooling
+.DS_Store
+
+# Build artifacts
+dist/
+build/
+
+# (future) Frontend + Terraform
+node_modules/
+.terraform/
+terraform.tfstate*
+
+# Project Management Docs
+project-management/
