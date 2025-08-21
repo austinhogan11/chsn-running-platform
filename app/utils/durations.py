@@ -23,9 +23,30 @@ def format_time_hhmmss(seconds: int) -> str:
     seconds = seconds % 60
     return f"{hh:02d}:{mm:02d}:{seconds:02d}"
 
+def parse_pace_mmss_per_mile(s: str) -> int:
+    """
+    Convert 'MM:SS' (per mile) into total seconds per mile (int).
+    Example: '08:00' -> 480
+    """
+    minutes, seconds = s.split(":")
+    return int(minutes) * 60 + int(seconds)
+
+
+def format_pace_mmss_per_mile(seconds_per_mile: int) -> str:
+    """
+    Convert seconds per mile into 'MM:SS' string.
+    Example: 480 -> '08:00'
+    """
+    minutes = seconds_per_mile // 60
+    seconds = seconds_per_mile % 60
+    return f"{minutes:02d}:{seconds:02d}"
+
 
 print(parse_time_hhmmss("00:40:00"))
 print(parse_time_hhmmss("7:30"))
 print(format_time_hhmmss(2400))
 
+
+print(parse_pace_mmss_per_mile("08:00"))  # expect 480
+print(format_pace_mmss_per_mile(450))     # expect "07:30"
 
