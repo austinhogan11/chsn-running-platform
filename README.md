@@ -1,6 +1,7 @@
 # The CHSN Running Platform
 
-![CI](https://github.com/austinhogan11/chsn-running-platform/actions/workflows/ci.yml/badge.svg)
+[![CI](https://github.com/austinhogan11/chsn-running-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/austinhogan11/chsn-running-platform/actions/workflows/ci.yml)
+
 
 Your next running companion without all of the chaos
 
