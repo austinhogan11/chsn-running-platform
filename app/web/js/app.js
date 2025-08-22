@@ -85,3 +85,87 @@ toggleBtn?.addEventListener("click", () => {
   root.setAttribute("data-theme", next);
   localStorage.setItem("theme", next);
 });
+
+// ---------- Time Input Auto-Formatter ----------
+function onlyDigits(str) {
+  return (str || "").replace(/\D/g, "").slice(-6); // keep last 6 digits
+}
+
+function formatHMSFromDigits(d) {
+  d = onlyDigits(d);
+  if (d.length <= 2) {
+    // SS
+    const ss = d.padStart(2, "0");
+    return `00:00:${ss}`;
+  } else if (d.length <= 4) {
+    // MMSS
+    const mm = d.slice(0, d.length - 2).padStart(2, "0");
+    const ss = d.slice(-2);
+    return `00:${mm}:${ss}`;
+  } else {
+    // HHMMSS
+    const hh = d.slice(0, d.length - 4).padStart(2, "0");
+    const mm = d.slice(-4, -2);
+    const ss = d.slice(-2);
+    return `${hh}:${mm}:${ss}`;
+  }
+}
+
+const timeInput = document.getElementById("time");
+if (timeInput) {
+  timeInput.addEventListener("input", () => {
+    const caretAtEnd =
+      document.activeElement === timeInput &&
+      timeInput.selectionStart === timeInput.value.length;
+    const formatted = formatHMSFromDigits(timeInput.value);
+    timeInput.value = formatted;
+    if (caretAtEnd) {
+      timeInput.setSelectionRange(
+        timeInput.value.length,
+        timeInput.value.length
+      );
+    }
+  });
+
+  timeInput.addEventListener("focus", () => {
+    if (!onlyDigits(timeInput.value)) timeInput.value = "00:00:00";
+  });
+}
+
+// ---------- Pace Input Auto-Formatter (MM:SS) ----------
+function formatMSFromDigits(d) {
+  d = (d || "").replace(/\D/g, "").slice(-4); // keep last 4 digits
+  if (d.length <= 2) {
+    // SS
+    const ss = d.padStart(2, "0");
+    return `00:${ss}`;
+  } else {
+    // MMSS
+    const mm = d.slice(0, d.length - 2).padStart(2, "0");
+    const ss = d.slice(-2);
+    return `${mm}:${ss}`;
+  }
+}
+
+const paceInput = document.getElementById("pace");
+if (paceInput) {
+  paceInput.addEventListener("input", () => {
+    const caretAtEnd =
+      document.activeElement === paceInput &&
+      paceInput.selectionStart === paceInput.value.length;
+    const formatted = formatMSFromDigits(paceInput.value);
+    paceInput.value = formatted;
+    if (caretAtEnd) {
+      paceInput.setSelectionRange(
+        paceInput.value.length,
+        paceInput.value.length
+      );
+    }
+  });
+
+  paceInput.addEventListener("focus", () => {
+    // Seed default "00:00" if empty
+    const digits = paceInput.value.replace(/\D/g, "");
+    if (!digits) paceInput.value = "00:00";
+  });
+}

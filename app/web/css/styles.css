@@ -1,26 +1,29 @@
-/* -------- Theme tokens -------- */
+/* ===================== Theme tokens ===================== */
 :root {
+  --card-width: 420px;
+
   /* Light */
   --bg: #ffffff;
   --surface: #ffffff;
   --text: #111111;
   --muted: #6b7280;
-  --border: #e6e6e6;
-  --shadow: none;            /* outline vibe */
+  --border: #e6e6e6;      /* card border (light) */
+  --input-border: #cbd5e1;/* input border (a bit darker) */
+  --card-shadow: 0 6px 18px rgba(0,0,0,.06);
 
   /* Accents */
   --green-500: #20d4a6;
   --green-600: #169b80;
 }
 
-/* Dark (lighter gray background, charcoal surfaces) */
 :root[data-theme="dark"] {
   --bg: #161616;
   --surface: #1f1f1f;
   --text: #f3f4f6;
   --muted: #a1a1aa;
   --border: #2a2a2a;
-  --shadow: none;
+  --input-border: #2a2f37;
+  --card-shadow: none;
 }
 
 /* Respect OS preference unless user chose explicitly */
@@ -31,14 +34,16 @@
     --text: #f3f4f6;
     --muted: #a1a1aa;
     --border: #2a2a2a;
-    --shadow: none;
+    --input-border: #2a2f37;
+    --card-shadow: none;
   }
 }
 
-/* -------- Layout -------- */
+/* ===================== Layout & typography ===================== */
 * { box-sizing: border-box; }
 
 body {
+  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   background: var(--bg);
   color: var(--text);
   margin: 0;
@@ -48,88 +53,88 @@ body {
   transition: background 180ms ease, color 180ms ease;
 }
 
-/* Main fills the viewport and centers the stack */
 main {
-  min-height: 100vh;          /* full viewport */
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: center;    /* vertical center */
-  align-items: center;        /* horizontal center */
+  justify-content: center;
+  align-items: center;
   padding: 1rem;
-  gap: 12px;                  /* nice spacing between h1, form, result */
+  gap: 12px;
 }
 
-h1 { margin: 0 0 12px; text-align: center; }
-
-/* -------- Form Card -------- */
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 20px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-  width: 320px;            /* fixed card width */
-  max-width: 90vw;
-  align-items: center;     /* center child elements */
+h1 {
+  margin: 0 0 14px;
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: .2px;
 }
 
-label {
-  display: flex;
-  flex-direction: column;
-  align-items: center;     /* center the label + input together */
-  width: 100%;
-  color: var(--text);
-  font-size: 0.95rem;
-}
-
-input {
-  width: 80%;              /* make inputs narrower than card */
-  max-width: 250px;        /* nice cap */
-  margin-top: 6px;
-  padding: 0.55rem 0.6rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
-  color: var(--text);
-  text-align: center;      /* centers placeholder + text inside */
-}
-input:focus {
-  border-color: var(--green-500);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--green-500) 20%, transparent);
-}
-
-button[type="submit"] {
-  padding: 0.65rem 1rem;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: var(--green-600);
-  color: #ffffff;
-  cursor: pointer;
-  font-weight: 600;
-
-  /* Add these: */
-  width: 100%;
-  display: block;
-}
-button[type="submit"]:hover { background: var(--green-500); }
-button[type="submit"]:disabled { opacity: 0.6; cursor: not-allowed; }
-
-/* -------- Result Card -------- */
+/* ===================== Cards ===================== */
+form,
 #result {
+  width: var(--card-width);
+  max-width: 92vw;
   background: var(--surface);
   border: 1px solid var(--border);
-  color: var(--text);
-  border-radius: 12px;
+  border-radius: 14px;
+  box-shadow: var(--card-shadow);
+}
+
+form {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+}
+
+#result {
   padding: 16px 18px;
   margin-top: 16px;
   white-space: pre-wrap;
   word-break: break-word;
 }
 
-/* -------- Theme Toggle (top-right, outline icons) -------- */
+/* ===================== Form controls ===================== */
+label {
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  color: var(--text);
+  font-size: .98rem;
+}
+
+input {
+  width: 100%;
+  padding: .65rem .75rem;
+  border: 1px solid var(--input-border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  text-align: left;
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--green-500);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--green-500) 22%, transparent);
+}
+
+#time, #pace { font-variant-numeric: tabular-nums; }
+
+button[type="submit"] {
+  width: 100%;
+  padding: .7rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--green-600);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+button[type="submit"]:hover { background: var(--green-500); }
+button[type="submit"]:disabled { opacity: .6; cursor: not-allowed; }
+
+/* ===================== Theme toggle (top-right) ===================== */
 #theme-toggle {
   position: fixed;
   top: 16px;
@@ -146,15 +151,186 @@ button[type="submit"]:disabled { opacity: 0.6; cursor: not-allowed; }
   padding: 0;
 }
 #theme-toggle:hover { border-color: var(--green-500); color: var(--green-500); }
-
-/* Show only one icon based on theme */
 #theme-toggle .icon { display: none; }
 :root[data-theme="dark"]  #theme-toggle .moon { display: block; }
 :root[data-theme="light"] #theme-toggle .sun,
 :root:not([data-theme])  #theme-toggle .sun { display: block; }
 
-/* Light mode card borders */
-:root[data-theme="light"] form,
-:root[data-theme="light"] #result {
-  border: 1.5px solid #111; /* strong but not too heavy */
+/* ===================== Unit toggle (segmented buttons) ===================== */
+.unit-toggle {
+  display: inline-flex;
+  border: 1px solid var(--input-border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.unit-toggle label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 110px;      /* even button widths */
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  line-height: 1;
+  user-select: none;
+}
+
+.unit-toggle input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.unit-toggle label + label {
+  border-left: 1px solid var(--input-border);
+}
+
+.unit-toggle label span {
+  transition: background 160ms ease, color 160ms ease;
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.unit-toggle input[type="radio"]:checked + span {
+  background: var(--green-600);
+  color: #fff;
+}
+
+.unit-toggle label:hover span {
+  background: color-mix(in srgb, var(--green-500) 12%, transparent);
+}
+
+.distance-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.distance-row input {
+  flex: 1; /* input grows to fill available space */
+}
+
+.distance-row .unit-toggle {
+  flex-shrink: 0; /* keep unit toggle compact */
+}
+
+/* ===== Compact unit toggle aligned with distance input ===== */
+:root {
+  /* control sizing so inputs + toggle match */
+  --control-h: 44px;          /* height of inputs and toggle */
+  --control-radius: 10px;
+  --control-font: 0.95rem;
+}
+
+/* make inputs use the shared control height */
+input {
+  height: var(--control-h);
+  border-radius: var(--control-radius);
+  font-size: var(--control-font);
+}
+
+/* distance row layout */
+.distance-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* compact toggle */
+.distance-row .unit-toggle {
+  height: var(--control-h);
+  border-radius: var(--control-radius);
+  display: inline-flex;
+  align-items: stretch;
+}
+
+/* shrink labels; remove big min-width from earlier rules */
+.distance-row .unit-toggle label {
+  min-width: auto;                 /* override 110px */
+  padding: 0;                      /* we'll pad the inner span instead */
+  font-size: 0.9rem;               /* slightly smaller text */
+  font-weight: 600;
+  height: 100%;
+}
+
+/* make the pill fill the control height without looking bulky */
+.distance-row .unit-toggle label span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 12px;                 /* narrower pill */
+  border-radius: 8px;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+/* keep separator subtle */
+.distance-row .unit-toggle label + label {
+  border-left: 1px solid var(--input-border);
+}
+
+/* --- sliding highlight for unit toggle --- */
+.unit-toggle {
+  position: relative;
+  display: inline-flex;
+  border: 1px solid var(--input-border);
+  border-radius: var(--control-radius, 10px);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+/* the animated pill */
+.unit-toggle .thumb {
+  position: absolute;
+  inset: 4px;                    /* top/right/bottom/left padding inside */
+  width: calc(50% - 8px);        /* two options = half width minus insets */
+  border-radius: 8px;
+  background: var(--green-600);
+  transform: translateX(0%);     /* left by default (mi) */
+  transition: transform 200ms ease;
+  z-index: 0;                    /* sits behind labels */
+}
+
+/* when km is selected, slide right (uses :has — supported in modern browsers) */
+.unit-toggle:has(input[value="km"]:checked) .thumb {
+  transform: translateX(100%);
+}
+
+/* labels sit above the thumb */
+.unit-toggle label {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;                    /* handled by inner span */
+  height: var(--control-h, 44px);
+  font-weight: 600;
+  min-width: auto;
+}
+
+.unit-toggle label + label { border-left: 1px solid var(--input-border); }
+
+.unit-toggle label span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 12px;
+  border-radius: 8px;
+  color: var(--text);
+  transition: color 160ms ease;
+}
+
+/* make selected text white for contrast over the thumb */
+.unit-toggle input[type="radio"]:checked + span { color: #fff; }
+
+/* keep radios hidden but accessible */
+.unit-toggle input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
 }
