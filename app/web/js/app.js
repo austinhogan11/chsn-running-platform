@@ -1,10 +1,12 @@
-// ---------- Pace form ----------
+// ---------- Elements ----------
 const form = document.getElementById("pace-form");
 const result = document.getElementById("result");
 const submitBtn = form.querySelector('button[type="submit"]');
+const timeInput = document.getElementById("time");
+const paceInput = document.getElementById("pace");
 
+// ---------- Render helper ----------
 function renderResult(data) {
-  // prefer unit from backend; fallback to currently selected radio
   const currentUnit =
     (data && data.unit) ||
     document.querySelector('input[name="unit"]:checked')?.value ||
@@ -19,32 +21,36 @@ function renderResult(data) {
   result.textContent = rows.map(([k, v]) => `${k}: ${v}`).join("\n");
 }
 
+// ---------- Submit ----------
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  // grab & trim
   const distanceRaw = document.getElementById("distance").value.trim();
-  const time = document.getElementById("time").value.trim();
-  const pace = document.getElementById("pace").value.trim();
+  const timeVal = timeInput.value.trim();
+  const paceVal = paceInput.value.trim();
 
-  // build query with exactly two params (+ unit)
-  const params = new URLSearchParams();
+  // Treat empty or zeroed masks as empty
+  const time = timeVal && timeVal !== "00:00:00" ? timeVal : "";
+  const pace = paceVal && paceVal !== "00:00" ? paceVal : "";
 
-  // selected unit from radios: 'miles' or 'km'
-  const unit = document.querySelector('input[name="unit"]:checked')?.value || "miles";
-  params.set("unit", unit);
+  const provided = [];
+  if (distanceRaw) provided.push("distance");
+  if (time)        provided.push("time");
+  if (pace)        provided.push("pace");
 
-  if (distanceRaw) params.set("distance", distanceRaw);
-  if (time) params.set("time", time);
-  if (pace) params.set("pace", pace);
-
-  const keys = Array.from(params.keys());
-  if (keys.length !== 3) {
-    result.textContent = "Please provide exactly two of: distance, time, pace. (Unit is selected separately.)";
+  if (provided.length !== 2) {
+    result.textContent =
+      "Please provide exactly two of: distance, time, pace. (Unit is selected separately.)";
     return;
   }
 
-  // basic sanity for distance
+  const params = new URLSearchParams();
+  const unit = document.querySelector('input[name="unit"]:checked')?.value || "miles";
+  params.set("unit", unit);
+  if (distanceRaw) params.set("distance", distanceRaw);
+  if (time)        params.set("time", time);
+  if (pace)        params.set("pace", pace);
+
   if (params.has("distance")) {
     const d = Number(params.get("distance"));
     if (!Number.isFinite(d) || d <= 0) {
@@ -53,7 +59,6 @@ form.addEventListener("submit", async (e) => {
     }
   }
 
-  // UI: loading state
   submitBtn.disabled = true;
   const prev = submitBtn.textContent;
   submitBtn.textContent = "Calculating…";
@@ -67,7 +72,6 @@ form.addEventListener("submit", async (e) => {
       result.textContent = `Error (${resp.status}): ${data?.detail ?? "Invalid input"}`;
       return;
     }
-
     renderResult(data);
   } catch (err) {
     result.textContent = `Network error: ${err}`;
@@ -77,107 +81,82 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
-// ---------- Theme toggle (SVG icons shown via CSS) ----------
+// ---------- Theme toggle ----------
 const root = document.documentElement;
 const toggleBtn = document.getElementById("theme-toggle");
-
-// apply saved theme if present
 const savedTheme = localStorage.getItem("theme");
 if (savedTheme === "light" || savedTheme === "dark") {
   root.setAttribute("data-theme", savedTheme);
 }
-
-// toggle handler
 toggleBtn?.addEventListener("click", () => {
   const current =
     root.getAttribute("data-theme") ||
     (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-
   const next = current === "dark" ? "light" : "dark";
   root.setAttribute("data-theme", next);
   localStorage.setItem("theme", next);
 });
 
-// ---------- Time Input Auto-Formatter ----------
+// ---------- Input formatters (no seeding, allow clearing to empty) ----------
 function onlyDigits(str) {
-  return (str || "").replace(/\D/g, "").slice(-6); // keep last 6 digits
+  return (str || "").replace(/\D/g, "");
 }
 
-function formatHMSFromDigits(d) {
-  d = onlyDigits(d);
+// Time: HH:MM:SS when digits exist; empty stays empty
+function formatHMSFromDigits(digits) {
+  const d = onlyDigits(digits).slice(-6);
+  if (!d) return "";                        // <-- key change
   if (d.length <= 2) {
-    // SS
     const ss = d.padStart(2, "0");
     return `00:00:${ss}`;
   } else if (d.length <= 4) {
-    // MMSS
-    const mm = d.slice(0, d.length - 2).padStart(2, "0");
+    const mm = d.slice(0, -2).padStart(2, "0");
     const ss = d.slice(-2);
     return `00:${mm}:${ss}`;
   } else {
-    // HHMMSS
-    const hh = d.slice(0, d.length - 4).padStart(2, "0");
+    const hh = d.slice(0, -4).padStart(2, "0");
     const mm = d.slice(-4, -2);
     const ss = d.slice(-2);
     return `${hh}:${mm}:${ss}`;
   }
 }
 
-const timeInput = document.getElementById("time");
-if (timeInput) {
-  timeInput.addEventListener("input", () => {
-    const caretAtEnd =
-      document.activeElement === timeInput &&
-      timeInput.selectionStart === timeInput.value.length;
-    const formatted = formatHMSFromDigits(timeInput.value);
-    timeInput.value = formatted;
-    if (caretAtEnd) {
-      timeInput.setSelectionRange(
-        timeInput.value.length,
-        timeInput.value.length
-      );
-    }
-  });
+timeInput.addEventListener("input", () => {
+  const caretAtEnd =
+    document.activeElement === timeInput &&
+    timeInput.selectionStart === timeInput.value.length;
 
-  timeInput.addEventListener("focus", () => {
-    if (!onlyDigits(timeInput.value)) timeInput.value = "00:00:00";
-  });
-}
+  const formatted = formatHMSFromDigits(timeInput.value);
+  timeInput.value = formatted;              // "" if user cleared all digits
 
-// ---------- Pace Input Auto-Formatter (MM:SS) ----------
-function formatMSFromDigits(d) {
-  d = (d || "").replace(/\D/g, "").slice(-4); // keep last 4 digits
+  if (caretAtEnd) {
+    timeInput.setSelectionRange(timeInput.value.length, timeInput.value.length);
+  }
+});
+
+// Pace: MM:SS when digits exist; empty stays empty
+function formatMSFromDigits(digits) {
+  const d = onlyDigits(digits).slice(-4);
+  if (!d) return "";                        // <-- key change
   if (d.length <= 2) {
-    // SS
     const ss = d.padStart(2, "0");
     return `00:${ss}`;
   } else {
-    // MMSS
-    const mm = d.slice(0, d.length - 2).padStart(2, "0");
+    const mm = d.slice(0, -2).padStart(2, "0");
     const ss = d.slice(-2);
     return `${mm}:${ss}`;
   }
 }
 
-const paceInput = document.getElementById("pace");
-if (paceInput) {
-  paceInput.addEventListener("input", () => {
-    const caretAtEnd =
-      document.activeElement === paceInput &&
-      paceInput.selectionStart === paceInput.value.length;
-    const formatted = formatMSFromDigits(paceInput.value);
-    paceInput.value = formatted;
-    if (caretAtEnd) {
-      paceInput.setSelectionRange(
-        paceInput.value.length,
-        paceInput.value.length
-      );
-    }
-  });
+paceInput.addEventListener("input", () => {
+  const caretAtEnd =
+    document.activeElement === paceInput &&
+    paceInput.selectionStart === paceInput.value.length;
 
-  paceInput.addEventListener("focus", () => {
-    // Seed default "00:00" if empty
-    const digits = paceInput.value.replace(/\D/g, "");
-    if (!digits) paceInput.value = "00:00";
-  });
-}
+  const formatted = formatMSFromDigits(paceInput.value);
+  paceInput.value = formatted;              // "" if user cleared all digits
+
+  if (caretAtEnd) {
+    paceInput.setSelectionRange(paceInput.value.length, paceInput.value.length);
+  }
+});

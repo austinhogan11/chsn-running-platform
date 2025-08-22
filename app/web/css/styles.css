@@ -7,13 +7,18 @@
   --surface: #ffffff;
   --text: #111111;
   --muted: #6b7280;
-  --border: #e6e6e6;      /* card border (light) */
-  --input-border: #cbd5e1;/* input border (a bit darker) */
+  --border: #e6e6e6;        /* card border */
+  --input-border: #cbd5e1;  /* input border (darker in light) */
   --card-shadow: 0 6px 18px rgba(0,0,0,.06);
 
   /* Accents */
   --green-500: #20d4a6;
   --green-600: #169b80;
+
+  /* control sizes */
+  --control-h: 44px;
+  --control-radius: 10px;
+  --control-font: 0.95rem;
 }
 
 :root[data-theme="dark"] {
@@ -26,7 +31,7 @@
   --card-shadow: none;
 }
 
-/* Respect OS preference unless user chose explicitly */
+/* Respect OS preference unless explicitly overridden */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
     --bg: #161616;
@@ -105,13 +110,16 @@ label {
 
 input {
   width: 100%;
+  height: var(--control-h);
   padding: .65rem .75rem;
   border: 1px solid var(--input-border);
-  border-radius: 10px;
+  border-radius: var(--control-radius);
   background: var(--bg);
   color: var(--text);
-  text-align: left;
+  font-size: var(--control-font);
 }
+
+input::placeholder { color: var(--muted); }
 
 input:focus {
   outline: none;
@@ -123,9 +131,10 @@ input:focus {
 
 button[type="submit"] {
   width: 100%;
-  padding: .7rem 1rem;
+  height: var(--control-h);
+  padding: 0 1rem;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: var(--control-radius);
   background: var(--green-600);
   color: #fff;
   font-weight: 600;
@@ -156,162 +165,50 @@ button[type="submit"]:disabled { opacity: .6; cursor: not-allowed; }
 :root[data-theme="light"] #theme-toggle .sun,
 :root:not([data-theme])  #theme-toggle .sun { display: block; }
 
-/* ===================== Unit toggle (segmented buttons) ===================== */
+/* ===================== Distance row ===================== */
+.distance-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.distance-row input { flex: 1; }
+
+/* ===================== Unit toggle (segmented, with sliding thumb) ===================== */
 .unit-toggle {
-  display: inline-flex;
-  border: 1px solid var(--input-border);
-  border-radius: 10px;
-  overflow: hidden;
-  background: var(--surface);
-}
-
-.unit-toggle label {
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 110px;      /* even button widths */
-  padding: 10px 16px;
-  cursor: pointer;
-  font-weight: 600;
-  line-height: 1;
-  user-select: none;
-}
-
-.unit-toggle input[type="radio"] {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.unit-toggle label + label {
-  border-left: 1px solid var(--input-border);
-}
-
-.unit-toggle label span {
-  transition: background 160ms ease, color 160ms ease;
-  border-radius: 8px;
-  padding: 6px 10px;
-}
-
-.unit-toggle input[type="radio"]:checked + span {
-  background: var(--green-600);
-  color: #fff;
-}
-
-.unit-toggle label:hover span {
-  background: color-mix(in srgb, var(--green-500) 12%, transparent);
-}
-
-.distance-row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.distance-row input {
-  flex: 1; /* input grows to fill available space */
-}
-
-.distance-row .unit-toggle {
-  flex-shrink: 0; /* keep unit toggle compact */
-}
-
-/* ===== Compact unit toggle aligned with distance input ===== */
-:root {
-  /* control sizing so inputs + toggle match */
-  --control-h: 44px;          /* height of inputs and toggle */
-  --control-radius: 10px;
-  --control-font: 0.95rem;
-}
-
-/* make inputs use the shared control height */
-input {
-  height: var(--control-h);
-  border-radius: var(--control-radius);
-  font-size: var(--control-font);
-}
-
-/* distance row layout */
-.distance-row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-/* compact toggle */
-.distance-row .unit-toggle {
-  height: var(--control-h);
-  border-radius: var(--control-radius);
   display: inline-flex;
   align-items: stretch;
-}
-
-/* shrink labels; remove big min-width from earlier rules */
-.distance-row .unit-toggle label {
-  min-width: auto;                 /* override 110px */
-  padding: 0;                      /* we'll pad the inner span instead */
-  font-size: 0.9rem;               /* slightly smaller text */
-  font-weight: 600;
-  height: 100%;
-}
-
-/* make the pill fill the control height without looking bulky */
-.distance-row .unit-toggle label span {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  padding: 0 12px;                 /* narrower pill */
-  border-radius: 8px;
-  transition: background 160ms ease, color 160ms ease;
-}
-
-/* keep separator subtle */
-.distance-row .unit-toggle label + label {
-  border-left: 1px solid var(--input-border);
-}
-
-/* --- sliding highlight for unit toggle --- */
-.unit-toggle {
-  position: relative;
-  display: inline-flex;
+  height: var(--control-h);
   border: 1px solid var(--input-border);
-  border-radius: var(--control-radius, 10px);
+  border-radius: var(--control-radius);
   background: var(--surface);
   overflow: hidden;
 }
 
-/* the animated pill */
 .unit-toggle .thumb {
   position: absolute;
-  inset: 4px;                    /* top/right/bottom/left padding inside */
-  width: calc(50% - 8px);        /* two options = half width minus insets */
+  inset: 4px;
+  width: calc(50% - 8px);
   border-radius: 8px;
   background: var(--green-600);
-  transform: translateX(0%);     /* left by default (mi) */
+  transform: translateX(0%);
   transition: transform 200ms ease;
-  z-index: 0;                    /* sits behind labels */
+  z-index: 0;
 }
+.unit-toggle:has(input[value="km"]:checked) .thumb { transform: translateX(100%); }
 
-/* when km is selected, slide right (uses :has — supported in modern browsers) */
-.unit-toggle:has(input[value="km"]:checked) .thumb {
-  transform: translateX(100%);
-}
-
-/* labels sit above the thumb */
 .unit-toggle label {
   position: relative;
   z-index: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0;                    /* handled by inner span */
-  height: var(--control-h, 44px);
-  font-weight: 600;
   min-width: auto;
+  padding: 0;
+  height: 100%;
+  font-size: .9rem;
+  font-weight: 600;
 }
-
 .unit-toggle label + label { border-left: 1px solid var(--input-border); }
 
 .unit-toggle label span {
@@ -325,12 +222,9 @@ input {
   transition: color 160ms ease;
 }
 
-/* make selected text white for contrast over the thumb */
-.unit-toggle input[type="radio"]:checked + span { color: #fff; }
-
-/* keep radios hidden but accessible */
 .unit-toggle input[type="radio"] {
   position: absolute;
   opacity: 0;
   pointer-events: none;
 }
+.unit-toggle input[type="radio"]:checked + span { color: #fff; }
