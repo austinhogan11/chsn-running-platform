@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>CHSN Pace Calculator</title>
+    <link rel="stylesheet" href="/static/css/styles.css" />
+    <script src="/static/js/app.js"></script>
+  </head>
+  <body>
+    <h1>Pace Calculator</h1>
+
+    <form id="pace-form">
+      <label>Distance (miles)
+        <input type="number" step="0.01" id="distance" placeholder="e.g. 5" />
+      </label>
+
+      <label>Time (HH:MM:SS)
+        <input type="text" id="time" placeholder="e.g. 00:40:00" />
+      </label>
+
+      <label>Pace (MM:SS per mile)
+        <input type="text" id="pace" placeholder="e.g. 08:00" />
+      </label>
+
+      <button type="submit">Calculate</button>
+    </form>
+
+    <pre id="result">Fill any two fields and click Calculate.</pre>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
