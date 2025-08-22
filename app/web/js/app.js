@@ -1,26 +1,26 @@
+// ---------- Pace form ----------
 const form = document.getElementById("pace-form");
 const result = document.getElementById("result");
 const submitBtn = form.querySelector('button[type="submit"]');
 
 function renderResult(data) {
-  // Expecting keys: distance, time, pace (from your API)
   const rows = [
     ["Distance (mi)", data.distance],
     ["Time", data.time],
     ["Pace (min/mi)", data.pace],
   ];
-  const lines = rows.map(([k, v]) => `${k}: ${v}`);
-  result.textContent = lines.join("\n");
+  result.textContent = rows.map(([k, v]) => `${k}: ${v}`).join("\n");
 }
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
+  // grab & trim
   const distanceRaw = document.getElementById("distance").value.trim();
   const time = document.getElementById("time").value.trim();
   const pace = document.getElementById("pace").value.trim();
 
-  // Build params with exactly two fields
+  // build query with exactly two params
   const params = new URLSearchParams();
   if (distanceRaw) params.set("distance", distanceRaw);
   if (time) params.set("time", time);
@@ -32,7 +32,7 @@ form.addEventListener("submit", async (e) => {
     return;
   }
 
-  // Quick sanity check on distance if provided
+  // basic sanity for distance
   if (params.has("distance")) {
     const d = Number(params.get("distance"));
     if (!Number.isFinite(d) || d <= 0) {
@@ -52,9 +52,7 @@ form.addEventListener("submit", async (e) => {
     const data = await resp.json();
 
     if (!resp.ok) {
-      // FastAPI returns {"detail": "..."} on 400
-      const message = data?.detail || "Invalid input.";
-      result.textContent = `Error (${resp.status}): ${message}`;
+      result.textContent = `Error (${resp.status}): ${data?.detail ?? "Invalid input"}`;
       return;
     }
 
@@ -65,4 +63,25 @@ form.addEventListener("submit", async (e) => {
     submitBtn.disabled = false;
     submitBtn.textContent = prev;
   }
+});
+
+// ---------- Theme toggle (SVG icons shown via CSS) ----------
+const root = document.documentElement;
+const toggleBtn = document.getElementById("theme-toggle");
+
+// apply saved theme if present
+const savedTheme = localStorage.getItem("theme");
+if (savedTheme === "light" || savedTheme === "dark") {
+  root.setAttribute("data-theme", savedTheme);
+}
+
+// toggle handler
+toggleBtn?.addEventListener("click", () => {
+  const current =
+    root.getAttribute("data-theme") ||
+    (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+
+  const next = current === "dark" ? "light" : "dark";
+  root.setAttribute("data-theme", next);
+  localStorage.setItem("theme", next);
 });

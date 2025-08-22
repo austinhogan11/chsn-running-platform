@@ -1,83 +1,160 @@
-body {
-    font-family: system-ui, sans-serif;
-    margin: 0;
-    min-height: 100vh;
+/* -------- Theme tokens -------- */
+:root {
+  /* Light */
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --text: #111111;
+  --muted: #6b7280;
+  --border: #e6e6e6;
+  --shadow: none;            /* outline vibe */
 
-    /* Center everything */
-    display: flex;
-    flex-direction: column;
-    /* stack title + form */
-    justify-content: center;
-    /* vertical center */
-    align-items: center;
-    /* horizontal center */
+  /* Accents */
+  --green-500: #20d4a6;
+  --green-600: #169b80;
 }
 
+/* Dark (lighter gray background, charcoal surfaces) */
+:root[data-theme="dark"] {
+  --bg: #161616;
+  --surface: #1f1f1f;
+  --text: #f3f4f6;
+  --muted: #a1a1aa;
+  --border: #2a2a2a;
+  --shadow: none;
+}
+
+/* Respect OS preference unless user chose explicitly */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg: #161616;
+    --surface: #1f1f1f;
+    --text: #f3f4f6;
+    --muted: #a1a1aa;
+    --border: #2a2a2a;
+    --shadow: none;
+  }
+}
+
+/* -------- Layout -------- */
+* { box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+/* Main fills the viewport and centers the stack */
+main {
+  min-height: 100vh;          /* full viewport */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;    /* vertical center */
+  align-items: center;        /* horizontal center */
+  padding: 1rem;
+  gap: 12px;                  /* nice spacing between h1, form, result */
+}
+
+h1 { margin: 0 0 12px; text-align: center; }
+
+/* -------- Form Card -------- */
 form {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  width: 320px;            /* fixed card width */
+  max-width: 90vw;
+  align-items: center;     /* center child elements */
 }
 
 label {
-    display: grid;
-    gap: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;     /* center the label + input together */
+  width: 100%;
+  color: var(--text);
+  font-size: 0.95rem;
 }
 
 input {
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 6px;
+  width: 80%;              /* make inputs narrower than card */
+  max-width: 250px;        /* nice cap */
+  margin-top: 6px;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  text-align: center;      /* centers placeholder + text inside */
+}
+input:focus {
+  border-color: var(--green-500);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--green-500) 20%, transparent);
 }
 
-button {
-    padding: 0.6rem 1rem;
-    border: 0;
-    border-radius: 6px;
-    background: #111;
-    color: #fff;
-}
+button[type="submit"] {
+  padding: 0.65rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--green-600);
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 600;
 
-pre {
-    margin-top: 1rem;
-    background: #f7f7f7;
-    padding: 1rem;
-    border-radius: 6px;
+  /* Add these: */
+  width: 100%;
+  display: block;
 }
+button[type="submit"]:hover { background: var(--green-500); }
+button[type="submit"]:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* Result card */
+/* -------- Result Card -------- */
 #result {
-  background: #ffffff;
-  border: 1px solid #e6e6e6;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
   border-radius: 12px;
   padding: 16px 18px;
   margin-top: 16px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-  font-size: 0.95rem;
-  line-height: 1.4;
-  white-space: pre-wrap;   /* wrap long lines nicely */
+  white-space: pre-wrap;
   word-break: break-word;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.08), 0 6px 6px rgba(0,0,0,0.06);
 }
 
-/* Optional: subtle header + spacing for the whole section */
-#pace-form {
-  margin-bottom: 12px;
+/* -------- Theme Toggle (top-right, outline icons) -------- */
+#theme-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  padding: 0;
 }
+#theme-toggle:hover { border-color: var(--green-500); color: var(--green-500); }
 
-h1 {
-  margin-bottom: 12px;
-}
+/* Show only one icon based on theme */
+#theme-toggle .icon { display: none; }
+:root[data-theme="dark"]  #theme-toggle .moon { display: block; }
+:root[data-theme="light"] #theme-toggle .sun,
+:root:not([data-theme])  #theme-toggle .sun { display: block; }
 
-/* Optional: animate card in */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-#result {
-  animation: fadeUp 220ms ease-out;
+/* Light mode card borders */
+:root[data-theme="light"] form,
+:root[data-theme="light"] #result {
+  border: 1.5px solid #111; /* strong but not too heavy */
 }

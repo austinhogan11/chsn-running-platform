@@ -1,31 +1,57 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>CHSN Pace Calculator</title>
+
     <link rel="stylesheet" href="/static/css/styles.css" />
+    <!-- Your app logic (form handler + theme toggle) -->
     <script src="/static/js/app.js" defer></script>
   </head>
   <body>
-    <h1>Pace Calculator</h1>
+    <header>
+      <button id="theme-toggle" class="icon-btn" aria-label="Toggle color theme" title="Toggle theme">
+        <!-- Sun (outline) -->
+        <svg class="icon sun" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <!-- Moon (outline) -->
+        <svg class="icon moon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"></path>
+        </svg>
+      </button>
+    </header>
+    <!-- Theme toggle (top-right) -->
 
-    <form id="pace-form">
-      <label>Distance (miles)
-        <input type="number" step="0.01" id="distance" placeholder="e.g. 5" />
-      </label>
+    <main>
+      <h1>Pace Calculator</h1>
 
-      <label>Time (HH:MM:SS)
-        <input type="text" id="time" placeholder="e.g. 00:40:00" />
-      </label>
+      <form id="pace-form" autocomplete="off">
+        <label>Distance (miles)
+          <input type="number" step="0.01" id="distance" placeholder="e.g. 5" inputmode="decimal" />
+        </label>
 
-      <label>Pace (MM:SS per mile)
-        <input type="text" id="pace" placeholder="e.g. 08:00" />
-      </label>
+        <label>Time (HH:MM:SS)
+          <input type="text" id="time" placeholder="e.g. 00:40:00" />
+        </label>
 
-      <button type="submit">Calculate</button>
-    </form>
+        <label>Pace (MM:SS per mile)
+          <input type="text" id="pace" placeholder="e.g. 08:00" />
+        </label>
 
-    <pre id="result">Fill any two fields and click Calculate.</pre>
-    <script src="/static/app.js"></script>
+        <button type="submit">Calculate</button>
+      </form>
+
+      <pre id="result">Fill any two fields and click Calculate.</pre>
+    </main>
   </body>
 </html>
