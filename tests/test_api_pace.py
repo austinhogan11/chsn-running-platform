@@ -7,13 +7,24 @@ client = TestClient(app)
 # ---------- VALID CASES ----------
 
 @pytest.mark.parametrize("params, expected", [
-    ({"distance": 5, "time": "00:40:00"},
+    # Miles (default)
+    ({"distance": 5, "time": "00:40:00", "unit": "miles"},
      {"distance": 5, "time": "00:40:00", "pace": "08:00"}),
 
-    ({"distance": 5, "pace": "08:00"},
+    ({"distance": 5, "pace": "08:00", "unit": "miles"},
      {"distance": 5, "time": "00:40:00", "pace": "08:00"}),
 
-    ({"time": "00:40:00", "pace": "08:00"},
+    ({"time": "00:40:00", "pace": "08:00", "unit": "miles"},
+     {"distance": 5.0, "time": "00:40:00", "pace": "08:00"}),
+
+    # Kilometers
+    ({"distance": 5, "time": "00:40:00", "unit": "km"},
+     {"distance": 5, "time": "00:40:00", "pace": "08:00"}),
+
+    ({"distance": 5, "pace": "08:00", "unit": "km"},
+     {"distance": 5, "time": "00:40:00", "pace": "08:00"}),
+
+    ({"time": "00:40:00", "pace": "08:00", "unit": "km"},
      {"distance": 5.0, "time": "00:40:00", "pace": "08:00"}),
 ])
 def test_pace_calc_valid(params, expected):
@@ -32,6 +43,10 @@ def test_pace_calc_valid(params, expected):
     {"time": "00:40:00"},  # only one
     {"pace": "08:00"},  # only one
     {"distance": 5, "time": "00:40:00", "pace": "08:00"},  # all three
+    # Invalid unit
+    {"distance": 5, "time": "00:40:00", "unit": "yards"},
+    {"distance": 5, "pace": "08:00", "unit": "minutes"},
+    {"time": "00:40:00", "pace": "08:00", "unit": "milez"},
 ])
 def test_requires_exactly_two_params(params):
     r = client.get("/pace-calc", params=params)
@@ -42,6 +57,9 @@ def test_requires_exactly_two_params(params):
     {"distance": 5, "pace": "8m:00s"},          # bad pace format
     {"time": "7-30", "pace": "08:00"},          # bad time format
     {"time": "00:40:00", "pace": "07:99"},      # invalid seconds
+    # Bad unit value
+    {"distance": 5, "time": "00:40:00", "unit": "parsecs"},
+    {"distance": 5, "pace": "08:00", "unit": "lightyears"},
 ])
 def test_invalid_string_inputs(params):
     r = client.get("/pace-calc", params=params)

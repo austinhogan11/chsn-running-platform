@@ -1,4 +1,3 @@
-
 def parse_time_hhmmss(s: str) -> int:
     """
     Accept 'HH:MM:SS' or 'MM:SS' and return total seconds.
@@ -31,9 +30,10 @@ def format_time_hhmmss(seconds: int) -> str:
     return f"{hh:02d}:{mm:02d}:{ss:02d}"
 
 
-def parse_pace_mmss_per_mile(s: str) -> int:
+def parse_pace_mmss(s: str) -> int:
     """
     Accept 'MM:SS' pace; validate seconds 0–59.
+    Returns total seconds per unit.
     """
     parts = s.split(":")
     if len(parts) != 2:
@@ -44,9 +44,12 @@ def parse_pace_mmss_per_mile(s: str) -> int:
     return mm * 60 + ss
 
 
-def format_pace_mmss_per_mile(seconds_per_mile: int) -> str:
-    if seconds_per_mile < 0:
+def format_pace_mmss(seconds_per_unit: int) -> str:
+    """
+    Format pace seconds per unit as 'MM:SS'.
+    """
+    if seconds_per_unit < 0:
         raise ValueError("pace seconds must be >= 0")
-    mm = seconds_per_mile // 60
-    ss = seconds_per_mile % 60
+    mm = seconds_per_unit // 60
+    ss = seconds_per_unit % 60
     return f"{mm:02d}:{ss:02d}"

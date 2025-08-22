@@ -4,10 +4,17 @@ const result = document.getElementById("result");
 const submitBtn = form.querySelector('button[type="submit"]');
 
 function renderResult(data) {
+  // prefer unit from backend; fallback to currently selected radio
+  const currentUnit =
+    (data && data.unit) ||
+    document.querySelector('input[name="unit"]:checked')?.value ||
+    "miles";
+  const u = currentUnit === "km" ? "km" : "mi";
+
   const rows = [
-    ["Distance (mi)", data.distance],
+    [`Distance (${u})`, data.distance],
     ["Time", data.time],
-    ["Pace (min/mi)", data.pace],
+    [`Pace (min/${u})`, data.pace],
   ];
   result.textContent = rows.map(([k, v]) => `${k}: ${v}`).join("\n");
 }
@@ -20,15 +27,20 @@ form.addEventListener("submit", async (e) => {
   const time = document.getElementById("time").value.trim();
   const pace = document.getElementById("pace").value.trim();
 
-  // build query with exactly two params
+  // build query with exactly two params (+ unit)
   const params = new URLSearchParams();
+
+  // selected unit from radios: 'miles' or 'km'
+  const unit = document.querySelector('input[name="unit"]:checked')?.value || "miles";
+  params.set("unit", unit);
+
   if (distanceRaw) params.set("distance", distanceRaw);
   if (time) params.set("time", time);
   if (pace) params.set("pace", pace);
 
   const keys = Array.from(params.keys());
-  if (keys.length !== 2) {
-    result.textContent = "Please provide exactly two of: distance, time, pace.";
+  if (keys.length !== 3) {
+    result.textContent = "Please provide exactly two of: distance, time, pace. (Unit is selected separately.)";
     return;
   }
 

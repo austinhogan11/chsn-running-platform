@@ -1,7 +1,7 @@
 import pytest
 from app.utils.durations import (
     parse_time_hhmmss, format_time_hhmmss,
-    parse_pace_mmss_per_mile, format_pace_mmss_per_mile,
+    parse_pace_mmss, format_pace_mmss,
 )
 
 # ---------- TIME (HH:MM:SS) ----------
@@ -42,8 +42,8 @@ def test_parse_time_hhmmss_invalid(bad_time_str):
     ("07:30", 450),
     ("09:05", 545),
 ])
-def test_parse_pace_mmss_per_mile(pace_str, expected_seconds):
-    assert parse_pace_mmss_per_mile(pace_str) == expected_seconds
+def test_parse_pace_mmss(pace_str, expected_seconds):
+    assert parse_pace_mmss(pace_str) == expected_seconds
 
 
 @pytest.mark.parametrize("seconds_per_mile,expected_str", [
@@ -51,8 +51,8 @@ def test_parse_pace_mmss_per_mile(pace_str, expected_seconds):
     (450, "07:30"),
     (545, "09:05"),
 ])
-def test_format_pace_mmss_per_mile(seconds_per_mile, expected_str):
-    assert format_pace_mmss_per_mile(seconds_per_mile) == expected_str
+def test_format_pace_mmss(seconds_per_mile, expected_str):
+    assert format_pace_mmss(seconds_per_mile) == expected_str
 
 
 @pytest.mark.parametrize("bad_pace_str", [
@@ -61,7 +61,6 @@ def test_format_pace_mmss_per_mile(seconds_per_mile, expected_str):
     "08-00",
     "07:99",     # invalid seconds
 ])
-def test_parse_pace_mmss_per_mile_invalid(bad_pace_str):
+def test_parse_pace_mmss_invalid(bad_pace_str):
     with pytest.raises(Exception):
-        parse_pace_mmss_per_mile(bad_pace_str)
-
+        parse_pace_mmss(bad_pace_str)
