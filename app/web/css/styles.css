@@ -48,3 +48,36 @@ pre {
     padding: 1rem;
     border-radius: 6px;
 }
+
+/* Result card */
+#result {
+  background: #ffffff;
+  border: 1px solid #e6e6e6;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-top: 16px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  white-space: pre-wrap;   /* wrap long lines nicely */
+  word-break: break-word;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.08), 0 6px 6px rgba(0,0,0,0.06);
+}
+
+/* Optional: subtle header + spacing for the whole section */
+#pace-form {
+  margin-bottom: 12px;
+}
+
+h1 {
+  margin-bottom: 12px;
+}
+
+/* Optional: animate card in */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+#result {
+  animation: fadeUp 220ms ease-out;
+}
