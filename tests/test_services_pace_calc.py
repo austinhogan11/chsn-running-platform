@@ -1,14 +1,6 @@
 # tests/test_services_pace.py
 import pytest
-from app.services.pace import (
-    pace_from_distance_time,
-    time_from_distance_pace,
-    distance_from_time_pace,
-)
-
-# tests/test_services_pace.py
-import pytest
-from app.services.pace import (
+from app.services.pace_calc import (
     pace_from_distance_time,
     time_from_distance_pace,
     distance_from_time_pace,

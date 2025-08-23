@@ -3,7 +3,7 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from app.services.pace import (
+from app.services.pace_calc import (
     pace_from_distance_time,
     time_from_distance_pace,
     distance_from_time_pace,
