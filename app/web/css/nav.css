@@ -1,8 +1,8 @@
 /* Floating rail nav */
 .rail {
   position: fixed;
-  left: 20px;
-  top: 28px;               /* sit near the header */
+  left: 18px;
+  top: calc(16px + 44px + 12px); /* sit just below the fixed logo: logoTop + logoHeight + gap */
   z-index: 40;
   display: grid;
   gap: 12px;
@@ -22,7 +22,13 @@
   box-shadow: var(--card-shadow);
 }
 
-/* Flyout list — fully collapsed by default */
+.rail__toggle:hover,
+.rail__toggle:focus {
+  border-color: var(--green-500);
+  color: var(--green-500);
+}
+
+/* Flyout list — fully collapsed by default; opens only via aria-expanded state */
 .rail__list {
   position: relative;
   list-style: none;
@@ -51,10 +57,10 @@
     box-shadow 160ms ease;
 }
 
-/* Expanded state (via toggle, hover, or focus in) */
+/* Expanded state: open ONLY when the toggle sets aria-expanded="true" */
 .rail[aria-expanded="true"] .rail__list,
-.rail:hover .rail__list,
-.rail:focus-within .rail__list {
+.rail__toggle:hover + .rail__list,
+.rail__toggle:focus + .rail__list {
   width: 220px;           /* actual panel width */
   max-height: 80vh;
   padding: 10px;
@@ -63,6 +69,10 @@
   opacity: 1;
   pointer-events: auto;
   transform: translateX(0);
+}
+
+.rail[aria-expanded="true"] .rail__list {
+  list-style: none;
 }
 
 /* Links */
@@ -86,19 +96,6 @@
   color: #fff;
 }
 
-/* Touch-first behavior: on coarse pointers, disable hover-open (use toggle only) */
-@media (pointer: coarse) {
-  .rail:hover .rail__list { /* ignore hover on touch */
-    width: 0;
-    max-height: 0;
-    padding: 0;
-    border-width: 0;
-    box-shadow: none;
-    opacity: 0;
-    pointer-events: none;
-    transform: translateX(-6px);
-  }
-}
 
 /* Optional: reduce motion */
 @media (prefers-reduced-motion: reduce) {
@@ -144,3 +141,29 @@
   /* Nicely spaced links for touch */
   .rail__list a { padding: 12px 14px; font-size: 1.05rem; }
 }
+
+
+.rail__logo {
+  position: fixed;
+  top: 16px;
+  left: 18px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rail__logo a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+  box-shadow: var(--card-shadow);
+}
+.rail__logo a:hover { border-color: var(--green-500); color: var(--green-500); }
