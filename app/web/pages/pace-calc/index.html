@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Calculate running pace, time, or distance in miles or kilometers." />
     <title>CHSN Pace Calculator</title>
 
     <!-- Fonts -->
@@ -12,6 +13,7 @@
 
     <!-- Styles & JS -->
     <link rel="stylesheet" href="/static/css/pace-calc.css" />
+    <noscript><p style="text-align:center;color:#c00;">This page requires JavaScript to work.</p></noscript>
     <script src="/static/js/common/formatters.js" defer></script>
     <script src="/static/js/common/deeplink.js" defer></script>
     <script src="/static/js/common/theme.js" defer></script>
@@ -19,7 +21,7 @@
     <script src="/static/js/common/dom.js" defer></script>
     <script src="/static/js/pace-calc.js" defer></script>
   </head>
-  <body>
+  <body data-page="pace-calc">
     <header>
       <button id="theme-toggle" class="icon-btn" aria-label="Toggle color theme" title="Toggle theme">
         <!-- Sun -->
