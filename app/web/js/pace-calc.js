@@ -72,6 +72,38 @@ if (typeof prefillFromQuery === "function") {
   prefillFromQuery();
 }
 
+// --- Safe helpers with fallbacks (works even if CH.http/CH.dom missing) ---
+async function fetchJSON(url) {
+  if (window.CH?.http?.getJSON) {
+    return window.CH.http.getJSON(url);
+  }
+  const resp = await fetch(url);
+  if (!resp.ok) {
+    let msg = "";
+    try { msg = await resp.text(); } catch {}
+    const err = new Error(msg || resp.statusText || "Request failed");
+    err.status = resp.status;
+    throw err;
+  }
+  return resp.json();
+}
+
+async function copyText(text) {
+  if (window.CH?.dom?.copy) {
+    return window.CH.dom.copy(text);
+  }
+  if (navigator.clipboard?.writeText) {
+    return navigator.clipboard.writeText(text);
+  }
+  // Very old fallback
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand("copy");
+  document.body.removeChild(ta);
+}
+
 /* ==================== Render helper ==================== */
 function renderResult(data) {
   const currentUnit =
@@ -131,7 +163,7 @@ form.addEventListener("submit", async (e) => {
   result.textContent = "Loading…";
 
   try {
-    const data = await CH.http.getJSON(`/pace-calc?${params.toString()}`);
+    const data = await fetchJSON(`/pace-calc?${params.toString()}`);
     renderResult(data);
     const url = updateQueryFromForm(distanceRaw, time, pace, unit);
 
@@ -139,7 +171,7 @@ form.addEventListener("submit", async (e) => {
     copyBtn.style.display = "inline-block";
     copyBtn.onclick = async () => {
       try {
-        await CH.dom.copy(window.location.origin + url);
+        await copyText(window.location.origin + url);
         const oldText = copyBtn.textContent;
         copyBtn.textContent = "Copied ✅";
         setTimeout(() => (copyBtn.textContent = oldText), 1500);

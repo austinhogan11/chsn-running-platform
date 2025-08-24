@@ -1,0 +1,146 @@
+/* Floating rail nav */
+.rail {
+  position: fixed;
+  left: 20px;
+  top: 28px;               /* sit near the header */
+  z-index: 40;
+  display: grid;
+  gap: 12px;
+}
+
+/* Toggle button */
+.rail__toggle {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: var(--card-shadow);
+}
+
+/* Flyout list — fully collapsed by default */
+.rail__list {
+  position: relative;
+  list-style: none;
+  margin: 0;
+
+  /* visually collapsed */
+  width: 0;
+  max-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: none;
+  overflow: hidden;
+
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-6px);
+  transition:
+    width 160ms ease,
+    max-height 160ms ease,
+    padding 160ms ease,
+    border-width 160ms ease,
+    opacity 120ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+/* Expanded state (via toggle, hover, or focus in) */
+.rail[aria-expanded="true"] .rail__list,
+.rail:hover .rail__list,
+.rail:focus-within .rail__list {
+  width: 220px;           /* actual panel width */
+  max-height: 80vh;
+  padding: 10px;
+  border: 1px solid var(--border);
+  box-shadow: var(--card-shadow);
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+}
+
+/* Links */
+.rail__list a {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+.rail__list a:hover {
+  background: color-mix(in srgb, var(--green-500) 12%, transparent);
+}
+
+/* Active state */
+.rail__list a.is-active {
+  background: var(--green-600);
+  color: #fff;
+}
+
+/* Touch-first behavior: on coarse pointers, disable hover-open (use toggle only) */
+@media (pointer: coarse) {
+  .rail:hover .rail__list { /* ignore hover on touch */
+    width: 0;
+    max-height: 0;
+    padding: 0;
+    border-width: 0;
+    box-shadow: none;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-6px);
+  }
+}
+
+/* Optional: reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  .rail__list {
+    transition: none;
+  }
+}
+
+/* ---------- Mobile tweaks ---------- */
+@media (max-width: 640px) {
+  .rail {
+    left: 12px;
+    top: 12px;
+    transform: none;            /* keep it in the corner */
+    gap: 8px;
+  }
+
+  .rail__toggle {
+    width: 44px;
+    height: 44px;               /* good touch target */
+  }
+
+  /* Make the list a little panel that slides in/out */
+  .rail__list {
+    position: absolute;
+    top: 52px;                  /* under the toggle */
+    left: 0;
+    max-width: 0;               /* collapsed by default */
+    width: 72vw;                /* panel width when expanded */
+    padding: 0;                 /* we animate this below */
+    overflow: hidden;
+    transition:
+      max-width 160ms ease,
+      padding 160ms ease,
+      box-shadow 160ms ease;
+  }
+  .rail[aria-expanded="true"] .rail__list {
+    max-width: 72vw;
+    padding: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  }
+
+  /* Nicely spaced links for touch */
+  .rail__list a { padding: 12px 14px; font-size: 1.05rem; }
+}

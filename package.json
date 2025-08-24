@@ -1,0 +1,13 @@
+{
+  "name": "chsn-running-platform",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "test:js": "jest",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  }
+}
