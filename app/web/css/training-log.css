@@ -1,0 +1,23 @@
+/* /static/css/training-log.css */
+/* Page header */
+.tl-header {
+  display: grid;
+  justify-items: center;
+  margin-bottom: 16px;
+}
+
+/* Card container for the log */
+.tl-card {
+  padding: 22px;
+}
+
+/* Empty state placeholder */
+.tl-empty {
+  text-align: center;
+  color: var(--muted);
+}
+.tl-empty .muted {
+  margin-top: 6px;
+  font-size: 0.95rem;
+  color: var(--muted);
+}

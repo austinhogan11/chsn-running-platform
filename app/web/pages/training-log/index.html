@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CHSN • Training Log</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Browse and analyze your runs by day, week, and month." />
+
+    <!-- Shared CSS -->
+    <link rel="stylesheet" href="/static/css/tokens.css" />
+    <link rel="stylesheet" href="/static/css/base.css" />
+    <link rel="stylesheet" href="/static/css/nav.css" />
+
+    <!-- Page CSS (scoped to training log) -->
+    <link rel="stylesheet" href="/static/css/training-log.css" />
+
+    <noscript>
+      <p style="text-align:center;color:#c00;">This page requires JavaScript.</p>
+    </noscript>
+  </head>
+  <body data-page="training-log" class="page">
+    <main>
+      <div class="page__container">
+        <header class="tl-header">
+          <h1>Training Log</h1>
+        </header>
+
+        <!-- Content shell; we’ll fill this in next -->
+        <section class="card tl-card">
+          <div class="tl-empty">
+            <p>Your training log UI will appear here.</p>
+            <p class="muted">Next step: add filters, run list, and the run detail modal.</p>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Shared JS (injects nav + binds theme toggle) -->
+    <script src="/static/js/common/theme.js" defer></script>
+    <script src="/static/js/site.js" defer></script>
+
+    <!-- Page JS (optional; add when we build UI) -->
+    <!-- <script src="/static/js/training-log.js" defer></script> -->
+  </body>
+</html>
