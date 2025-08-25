@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Training Log — runs, weekly totals, and trends." />
+    <title>Training Log</title>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="/static/css/nav.css" />
+    <link rel="stylesheet" href="/static/css/training-log.css" />
+
+    <!-- JS -->
+    <script src="/static/js/site.js" defer></script>
+    <script src="/static/js/training-log.js" defer></script>
+  </head>
+  <body data-page="training-log">
+    <header>
+      <button id="theme-toggle" class="icon-btn" aria-label="Toggle color theme" title="Toggle theme">
+        <!-- simple glyphs; your theme.js already wires this up -->
+        <svg class="icon sun" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="icon moon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"></path>
+        </svg>
+      </button>
+    </header>
+
+    <main class="tl">
+      <h1>Training Log</h1>
+
+      <!-- Sticky summary + filters -->
+      <section class="tl__summary" aria-label="Summary and filters">
+        <div class="totals">
+          <div><span class="k">Week Miles</span><span id="sum-week-mi" class="v">0</span></div>
+          <div><span class="k">Week Time</span><span id="sum-week-time" class="v">00:00:00</span></div>
+          <div><span class="k">Week Elev</span><span id="sum-week-elev" class="v">0 ft</span></div>
+        </div>
+
+        <form id="filters" class="filters" autocomplete="off">
+          <label>
+            Type
+            <select id="f-type">
+              <option value="">All</option>
+              <option value="easy">Easy</option>
+              <option value="long">Long</option>
+              <option value="workout">Workout</option>
+              <option value="race">Race</option>
+            </select>
+          </label>
+          <label>
+            From
+            <input type="date" id="f-start" />
+          </label>
+          <label>
+            To
+            <input type="date" id="f-end" />
+          </label>
+          <button type="button" id="f-clear">Clear</button>
+        </form>
+      </section>
+
+      <!-- Graph placeholders (you can wire charts later) -->
+      <section class="tl__graphs" aria-label="Graphs">
+        <div class="card placeholder">Weekly bar chart (Mon–Sun)</div>
+        <div class="card placeholder">12-week mileage trend</div>
+      </section>
+
+      <!-- Run cards -->
+      <section id="run-list" class="tl__list" aria-live="polite"></section>
+    </main>
+
+    <!-- Modal -->
+    <div id="run-modal" class="modal" hidden>
+      <div class="modal__backdrop"></div>
+      <article class="modal__card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <header class="modal__header">
+          <h2 id="modal-title">Run Details</h2>
+          <button id="modal-close" class="icon-btn" aria-label="Close">✕</button>
+        </header>
+        <div id="modal-body" class="modal__body">
+          <!-- Filled by JS: big description, splits/HR/elev charts if present -->
+        </div>
+      </article>
+    </div>
+  </body>
+</html>
