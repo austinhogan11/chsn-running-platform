@@ -1,148 +1,14 @@
-/* Floating rail nav */
+/* /static/css/nav.css — Floating rail (top-left), dropdown opens downward */
 .rail {
   position: fixed;
   left: 18px;
-  top: calc(16px + 44px + 12px); /* sit just below the fixed logo: logoTop + logoHeight + gap */
+  top: calc(16px + 44px + 12px); /* below the fixed logo */
   z-index: 40;
   display: grid;
   gap: 12px;
 }
 
-/* Toggle button */
-.rail__toggle {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  box-shadow: var(--card-shadow);
-}
-
-.rail__toggle:hover,
-.rail__toggle:focus {
-  border-color: var(--green-500);
-  color: var(--green-500);
-}
-
-/* Flyout list — fully collapsed by default; opens only via aria-expanded state */
-.rail__list {
-  position: relative;
-  list-style: none;
-  margin: 0;
-
-  /* visually collapsed */
-  width: 0;
-  max-height: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 12px;
-  background: var(--surface);
-  box-shadow: none;
-  overflow: hidden;
-
-  opacity: 0;
-  pointer-events: none;
-  transform: translateX(-6px);
-  transition:
-    width 160ms ease,
-    max-height 160ms ease,
-    padding 160ms ease,
-    border-width 160ms ease,
-    opacity 120ms ease,
-    transform 160ms ease,
-    box-shadow 160ms ease;
-}
-
-/* Expanded state: open ONLY when the toggle sets aria-expanded="true" */
-.rail[aria-expanded="true"] .rail__list,
-.rail__toggle:hover + .rail__list,
-.rail__toggle:focus + .rail__list {
-  width: 220px;           /* actual panel width */
-  max-height: 80vh;
-  padding: 10px;
-  border: 1px solid var(--border);
-  box-shadow: var(--card-shadow);
-  opacity: 1;
-  pointer-events: auto;
-  transform: translateX(0);
-}
-
-.rail[aria-expanded="true"] .rail__list {
-  list-style: none;
-}
-
-/* Links */
-.rail__list a {
-  display: block;
-  padding: 10px 12px;
-  border-radius: 10px;
-  color: var(--text);
-  text-decoration: none;
-  white-space: nowrap;
-  font-size: 1.05rem;
-  line-height: 1.2;
-}
-.rail__list a:hover {
-  background: color-mix(in srgb, var(--green-500) 12%, transparent);
-}
-
-/* Active state */
-.rail__list a.is-active {
-  background: var(--green-600);
-  color: #fff;
-}
-
-
-/* Optional: reduce motion */
-@media (prefers-reduced-motion: reduce) {
-  .rail__list {
-    transition: none;
-  }
-}
-
-/* ---------- Mobile tweaks ---------- */
-@media (max-width: 640px) {
-  .rail {
-    left: 12px;
-    top: 12px;
-    transform: none;            /* keep it in the corner */
-    gap: 8px;
-  }
-
-  .rail__toggle {
-    width: 44px;
-    height: 44px;               /* good touch target */
-  }
-
-  /* Make the list a little panel that slides in/out */
-  .rail__list {
-    position: absolute;
-    top: 52px;                  /* under the toggle */
-    left: 0;
-    max-width: 0;               /* collapsed by default */
-    width: 72vw;                /* panel width when expanded */
-    padding: 0;                 /* we animate this below */
-    overflow: hidden;
-    transition:
-      max-width 160ms ease,
-      padding 160ms ease,
-      box-shadow 160ms ease;
-  }
-  .rail[aria-expanded="true"] .rail__list {
-    max-width: 72vw;
-    padding: 10px;
-    box-shadow: 0 8px 24px rgba(0,0,0,.18);
-  }
-
-  /* Nicely spaced links for touch */
-  .rail__list a { padding: 12px 14px; font-size: 1.05rem; }
-}
-
-
+/* Fixed logo button in the very top-left */
 .rail__logo {
   position: fixed;
   top: 16px;
@@ -152,7 +18,6 @@
   align-items: center;
   justify-content: center;
 }
-
 .rail__logo a {
   display: inline-flex;
   align-items: center;
@@ -167,3 +32,128 @@
   box-shadow: var(--card-shadow);
 }
 .rail__logo a:hover { border-color: var(--green-500); color: var(--green-500); }
+
+/* Toggle button */
+.rail__toggle {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: var(--card-shadow);
+}
+.rail__toggle:hover,
+.rail__toggle:focus {
+  border-color: var(--green-500);
+  color: var(--green-500);
+}
+
+/* Dropdown list (collapsed by default) */
+.rail__list {
+  position: absolute;
+  top: 56px;   /* directly under the toggle */
+  left: 0;
+  list-style: none;
+  margin: 0;
+
+  width: 220px;
+  max-height: 0;
+  padding: 0;
+  border: 0 solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: none;
+  overflow: hidden;
+
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition:
+    max-height 160ms ease,
+    padding 160ms ease,
+    border-width 160ms ease,
+    opacity 120ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+/* Expanded */
+.rail[aria-expanded="true"] .rail__list,
+.rail:hover .rail__list,
+.rail:focus-within .rail__list,
+.rail__toggle:hover + .rail__list,
+.rail__toggle:focus + .rail__list {
+  max-height: 80vh;
+  padding: 10px;
+  border-width: 1px;
+  box-shadow: var(--card-shadow);
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+/* Links */
+.rail__list a {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
+/* Hover highlight for normal items */
+.rail__list a:hover,
+.rail__list a:focus-visible {
+  background: color-mix(in srgb, var(--green-500) 14%, transparent);
+}
+
+/* Active page highlight — keep it bright even on hover/focus */
+.rail__list a.is-active,
+.rail__list a.is-active:hover,
+.rail__list a.is-active:focus-visible {
+  background: var(--green-500);
+  color: #fff;
+}
+
+/* Theme toggle (top-right) */
+#theme-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  padding: 0;
+  box-shadow: var(--card-shadow);
+}
+#theme-toggle:hover { border-color: var(--green-500); color: var(--green-500); }
+#theme-toggle .icon { display: none; }
+:root[data-theme="dark"]  #theme-toggle .moon { display: block; }
+:root[data-theme="light"] #theme-toggle .sun,
+:root:not([data-theme])  #theme-toggle .sun { display: block; }
+
+/* Motion prefs */
+@media (prefers-reduced-motion: reduce) {
+  .rail__list { transition: none; }
+}
+
+/* Mobile tweaks */
+@media (max-width: 640px) {
+  .rail { left: 12px; top: calc(12px + 44px + 8px); gap: 8px; }
+  .rail__list { width: min(72vw, 260px); }
+  .rail[aria-expanded="true"] .rail__list { max-height: 75vh; }
+  .rail__list a { padding: 12px 14px; font-size: 1.05rem; }
+}

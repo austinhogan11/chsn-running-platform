@@ -7,6 +7,8 @@ from uuid import uuid4
 router = APIRouter(prefix="/runs", tags=["runs"])
 
 # ---- Models ----
+RunType = Literal["Easy Run", "Workout", "Long Run", "Race"]
+
 class RunIn(BaseModel):
     title: str
     description: Optional[str] = ""
@@ -14,6 +16,7 @@ class RunIn(BaseModel):
     distance: float = Field(gt=0)
     unit: Literal["mi", "km"] = "mi"
     duration_s: int = Field(gt=0)
+    run_type: RunType = "Easy Run"
 
 class Run(RunIn):
     id: str

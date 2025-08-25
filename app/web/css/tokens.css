@@ -1,0 +1,49 @@
+
+
+/* /static/css/tokens.css (shared design tokens) */
+:root {
+  /* Light / Cream */
+  --bg: #faf6ee;            /* page background */
+  --surface: #ffffff;       /* cards/surfaces */
+  --text: #111111;
+  --muted: #6b7280;
+  --border: #e6e6e6;
+  --input-border: #cbd5e1;
+  --card-shadow: 0 10px 30px rgba(0,0,0,.06);
+
+  /* Accent */
+  --green-500: #20d4a6;
+  --green-600: #169b80;
+
+  /* Controls */
+  --control-h: 44px;
+  --control-radius: 10px;
+  --control-font: 0.95rem;
+
+  /* Layout */
+  --page-max: 960px;
+  --gap: 16px;
+}
+
+:root[data-theme="dark"] {
+  --bg: #161616;
+  --surface: #1f1f1f;
+  --text: #f3f4f6;
+  --muted: #a1a1aa;
+  --border: #2a2a2a;
+  --input-border: #2a2f37;
+  --card-shadow: none;
+}
+
+/* Respect OS if user hasn’t picked */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg: #161616;
+    --surface: #1f1f1f;
+    --text: #f3f4f6;
+    --muted: #a1a1aa;
+    --border: #2a2a2a;
+    --input-border: #2a2f37;
+    --card-shadow: none;
+  }
+}

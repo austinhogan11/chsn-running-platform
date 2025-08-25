@@ -12,6 +12,13 @@ class UnitEnum(str, Enum):
     km = "km"
 
 
+class RunTypeEnum(str, Enum):
+    easy = "Easy Run"
+    workout = "Workout"
+    long = "Long Run"
+    race = "Race"
+
+
 class RunCreate(BaseModel):
     title: str = Field(..., max_length=120)
     description: Optional[str] = None
@@ -19,6 +26,7 @@ class RunCreate(BaseModel):
     distance: PositiveFloat
     unit: UnitEnum = UnitEnum.mi
     duration_s: int = Field(..., ge=1)  # total seconds
+    run_type: RunTypeEnum = RunTypeEnum.easy  # new field with default
 
     # Optional: computed on the server
     pace_s: Optional[int] = None
