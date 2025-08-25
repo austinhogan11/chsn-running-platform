@@ -3,11 +3,11 @@
   --card-width: 420px;
 
   /* Light */
-  --bg: #ffffff;
-  --surface: #ffffff;
+  --bg: #fdf6e3;
+  --surface: #fffaf0;
   --text: #111111;
   --muted: #6b7280;
-  --border: #e6e6e6;        /* card border */
+  --border: #d1cfc7;        /* card border */
   --input-border: #cbd5e1;  /* input border (darker in light) */
   --card-shadow: 0 6px 18px rgba(0,0,0,.06);
 
@@ -77,13 +77,29 @@ h1 {
 
 /* ===================== Cards ===================== */
 form,
+#result,
+#theme-toggle,
+.rail button {
+  box-shadow: 0 4px 10px rgba(0,0,0,.08);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+form,
 #result {
   width: var(--card-width);
   max-width: 92vw;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
-  box-shadow: var(--card-shadow);
+  /* box-shadow is inherited above */
+}
+
+form:hover,
+#result:hover,
+#theme-toggle:hover,
+.rail button:hover {
+  box-shadow: 0 6px 14px rgba(0,0,0,.12);
+  transform: translateY(-1px);
 }
 
 form {
@@ -112,9 +128,9 @@ input {
   width: 100%;
   height: var(--control-h);
   padding: .65rem .75rem;
-  border: 1px solid var(--input-border);
+  border: 1px solid var(--border);      /* match card border */
   border-radius: var(--control-radius);
-  background: var(--bg);
+  background: var(--surface);            /* match card background */
   color: var(--text);
   font-size: var(--control-font);
 }
