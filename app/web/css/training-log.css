@@ -1,23 +1,193 @@
 /* /static/css/training-log.css */
-/* Page header */
+
+/* ---------- Page header ---------- */
 .tl-header {
   display: grid;
   justify-items: center;
   margin-bottom: 16px;
 }
 
-/* Card container for the log */
-.tl-card {
-  padding: 22px;
+/* ---------- Rows & cards ---------- */
+.tl-row {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 14px;
 }
 
-/* Empty state placeholder */
-.tl-empty {
+.tl-row--charts {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 920px) {
+  .tl-row--charts {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--card-shadow);
+}
+
+.tl-card {
+  padding: 18px;
+}
+
+.tl-card--chart canvas {
+  width: 100%;
+  display: block;
+}
+
+/* card header line */
+.tl-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+/* ---------- Pills & seg buttons ---------- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--green-500) 14%, transparent);
+  color: var(--text);
+  font-weight: 600;
+  border: 1px solid color-mix(in srgb, var(--green-600) 40%, transparent);
+}
+
+.seg {
+  display: inline-flex;
+  gap: 6px;
+}
+.seg__btn {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+}
+.seg__btn.is-active,
+.seg__btn:hover {
+  background: var(--green-600);
+  color: #fff;
+  border-color: var(--green-600);
+}
+
+/* ---------- Filters ---------- */
+.tl-row--filters {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 720px) {
+  .tl-row--filters {
+    grid-template-columns: 1fr 1fr 1fr auto;
+  }
+}
+
+.filter {
+  display: grid;
+  gap: 6px;
+}
+
+.filter--actions {
+  align-content: end;
+}
+
+#filter-type,
+#filter-from,
+#filter-to {
+  height: var(--control-h, 44px);
+  border: 1px solid var(--input-border);
+  border-radius: var(--control-radius, 10px);
+  background: var(--bg);
+  color: var(--text);
+  padding: 0 10px;
+}
+
+.btn-secondary {
+  height: var(--control-h, 44px);
+  padding: 0 16px;
+  border-radius: var(--control-radius, 10px);
+  border: 1px solid var(--input-border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+.btn-secondary:hover { border-color: var(--green-500); }
+
+/* ---------- List ---------- */
+.tl-list { padding: 0; }
+.tl-list .tl-empty {
   text-align: center;
   color: var(--muted);
+  padding: 18px;
 }
-.tl-empty .muted {
-  margin-top: 6px;
-  font-size: 0.95rem;
+
+.run {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 16px;
+  padding: 16px 18px;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+}
+.run:first-child { border-top: 0; }
+
+.run__title {
+  font-weight: 700;
+}
+.run__meta,
+.run__desc {
   color: var(--muted);
+  font-size: .95rem;
 }
+.run__type {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--green-500) 10%, transparent);
+  font-weight: 600;
+}
+.run:hover { background: color-mix(in srgb, var(--green-500) 6%, transparent); }
+
+/* ---------- Modal ---------- */
+.modal[hidden] { display: none; }
+.modal {
+  position: fixed; inset: 0; z-index: 60;
+  display: grid; place-items: center;
+}
+.modal__backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,.45);
+}
+.modal__card {
+  position: relative;
+  width: min(720px, 92vw);
+  max-height: 88vh;
+  overflow: auto;
+  padding: 0;
+}
+.modal__head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.modal__body { padding: 16px; }
+
+/* ---------- Utilities ---------- */
+.small { font-size: .92rem; }
+.muted { color: var(--muted); }
