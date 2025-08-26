@@ -11,103 +11,169 @@
     <link rel="stylesheet" href="/static/css/base.css" />
     <link rel="stylesheet" href="/static/css/nav.css" />
 
-    <!-- Page CSS (scoped to training log) -->
+    <!-- Page CSS -->
     <link rel="stylesheet" href="/static/css/training-log.css" />
 
-    <noscript>
-      <p style="text-align:center;color:#c00;">This page requires JavaScript.</p>
-    </noscript>
+    <noscript><p style="text-align:center;color:#c00;">This page requires JavaScript.</p></noscript>
   </head>
   <body data-page="training-log" class="page">
     <main>
-    <div class="page__container">
-      <header class="tl-header">
-        <h1>Training Log</h1>
-      </header>
+      <div class="page__container">
+        <header class="tl-header">
+          <h1>Training Log</h1>
+        </header>
 
-      <!-- Pinned charts row -->
-      <section class="tl-row tl-row--charts">
-        <article class="card tl-card tl-card--chart" aria-labelledby="week-chart-title">
-          <div class="tl-card__head">
-            <h2 id="week-chart-title">This week</h2>
-            <div class="pill" id="week-total">0 mi</div>
+        <!-- Pinned charts row -->
+        <section class="tl-row tl-row--charts">
+          <article class="card tl-card tl-card--chart" aria-labelledby="week-chart-title">
+            <div class="tl-card__head">
+              <h2 id="week-chart-title">This week</h2>
+              <div class="pill" id="week-total-pill">0 mi</div>
+            </div>
+            <canvas id="weekChart" height="140"></canvas>
+            <p class="muted small">Mon–Sun daily mileage</p>
+          </article>
+
+          <article class="card tl-card tl-card--chart" aria-labelledby="trend-chart-title">
+            <div class="tl-card__head">
+              <h2 id="trend-chart-title">Mileage trend</h2>
+              <div class="seg" data-seg="trend-range">
+                <button class="seg__btn is-active" data-range="12w">12 wks</button>
+                <button class="seg__btn" data-range="6m">6 mo</button>
+                <button class="seg__btn" data-range="1y">1 yr</button>
+              </div>
+            </div>
+            <canvas id="trendChart" height="140"></canvas>
+            <p class="muted small">Weekly totals</p>
+          </article>
+        </section>
+
+        <!-- Filters -->
+        <section class="tl-row tl-row--filters card tl-card" aria-label="Filters">
+          <div class="filter">
+            <label for="filter-type">Type</label>
+            <select id="filter-type">
+              <option value="all">All</option>
+              <option value="Easy Run">Easy Run</option>
+              <option value="Workout">Workout</option>
+              <option value="Long Run">Long Run</option>
+              <option value="Race">Race</option>
+            </select>
           </div>
-          <canvas id="week-chart" height="140"></canvas>
-          <p class="muted small">Mon–Sun daily mileage</p>
-        </article>
 
-        <article class="card tl-card tl-card--chart" aria-labelledby="trend-chart-title">
-          <div class="tl-card__head">
-            <h2 id="trend-chart-title">Mileage trend</h2>
-            <div class="seg">
-              <button class="seg__btn is-active" data-range="12w">12 wks</button>
-              <button class="seg__btn" data-range="6m">6 mo</button>
-              <button class="seg__btn" data-range="1y">1 yr</button>
+          <div class="filter">
+            <label for="filter-from">From</label>
+            <input id="filter-from" type="date" />
+          </div>
+
+          <div class="filter">
+            <label for="filter-to">To</label>
+            <input id="filter-to" type="date" />
+          </div>
+
+          <div class="filter filter--actions">
+            <button id="filter-clear" class="btn-secondary">Clear</button>
+          </div>
+        </section>
+
+        <!-- Run list -->
+        <section class="tl-row">
+          <div id="run-list" class="tl-list card tl-card">
+            <div class="tl-empty">
+              <p>No runs match the current filters.</p>
             </div>
           </div>
-          <canvas id="trend-chart" height="140"></canvas>
-          <p class="muted small">Weekly totals</p>
-        </article>
-      </section>
+        </section>
+      </div>
 
-      <!-- Filters -->
-      <section class="tl-row tl-row--filters card tl-card" aria-label="Filters">
-        <div class="filter">
-          <label for="filter-type">Type</label>
-          <select id="filter-type">
-            <option value="all">All</option>
-            <option value="Easy Run">Easy Run</option>
-            <option value="Workout">Workout</option>
-            <option value="Long Run">Long Run</option>
-            <option value="Race">Race</option>
-          </select>
-        </div>
-
-        <div class="filter">
-          <label for="filter-from">From</label>
-          <input id="filter-from" type="date" />
-        </div>
-
-        <div class="filter">
-          <label for="filter-to">To</label>
-          <input id="filter-to" type="date" />
-        </div>
-
-        <div class="filter filter--actions">
-          <button id="filter-clear" class="btn-secondary">Clear</button>
-        </div>
-      </section>
-
-      <!-- Run list -->
-      <section class="tl-row">
-        <div id="run-list" class="tl-list card tl-card">
-          <div class="tl-empty">
-            <p>No runs match the current filters.</p>
-          </div>
-        </div>
-      </section>
-    </div>
-
-    <!-- Modal skeleton (hidden by default) -->
-    <div id="run-modal" class="modal" hidden>
-      <div class="modal__backdrop" data-close></div>
-      <div class="modal__card card">
-        <header class="modal__head">
-          <h3 id="modal-title">Run details</h3>
-          <button class="icon-btn" aria-label="Close" data-close>&times;</button>
-        </header>
-        <div id="modal-body" class="modal__body">
-          <!-- filled by JS -->
+      <!-- View Run Modal (details) -->
+      <div id="run-modal" class="modal" hidden>
+        <div class="modal__backdrop" data-close></div>
+        <div class="modal__card card">
+          <header class="modal__head">
+            <h3 id="modal-title">Run details</h3>
+            <button class="icon-btn" aria-label="Close" data-close>&times;</button>
+          </header>
+          <div id="modal-body" class="modal__body"><!-- filled by JS --></div>
         </div>
       </div>
-    </div>
-  </main>
 
-    <!-- Shared JS (injects nav + binds theme toggle) -->
+      <!-- Create / Edit Run Modal -->
+      <div id="run-form-modal" class="modal" hidden>
+        <div class="modal__backdrop" data-close></div>
+        <div class="modal__card card">
+          <header class="modal__head">
+            <h3 id="run-form-title">Add run</h3>
+            <button class="icon-btn" aria-label="Close" data-close>&times;</button>
+          </header>
+
+          <form id="run-form" class="form-grid">
+            <input type="hidden" id="run-id" />
+
+            <label>
+              <span>Title</span>
+              <input id="f-title" type="text" placeholder="Morning easy" required />
+            </label>
+
+            <label class="span-2">
+              <span>Description</span>
+              <textarea id="f-description" placeholder="How it felt, route, etc." rows="3"></textarea>
+            </label>
+
+            <label>
+              <span>Date &amp; time</span>
+              <input id="f-started" type="datetime-local" required />
+            </label>
+
+            <label>
+              <span>Distance</span>
+              <input id="f-distance" type="number" step="0.01" min="0" placeholder="5.00" required />
+            </label>
+
+            <label>
+              <span>Unit</span>
+              <select id="f-unit">
+                <option value="mi">mi</option>
+                <option value="km">km</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Duration (sec)</span>
+              <input id="f-duration" type="number" min="0" step="1" placeholder="2500" required />
+            </label>
+
+            <label>
+              <span>Run type</span>
+              <select id="f-type" required>
+                <option value="Easy Run">Easy Run</option>
+                <option value="Workout">Workout</option>
+                <option value="Long Run">Long Run</option>
+                <option value="Race">Race</option>
+              </select>
+            </label>
+
+            <div class="form-actions span-2">
+              <button type="button" class="btn-secondary" data-close>Cancel</button>
+              <button type="submit" class="btn-primary">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+
+    <!-- Floating Add Run button -->
+    <button id="add-run-btn" class="fab" type="button" aria-label="Add run" title="Add run">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M12 5v14M5 12h14"/>
+      </svg>
+    </button>
+
+    <!-- Shared JS -->
     <script src="/static/js/common/theme.js" defer></script>
     <script src="/static/js/site.js" defer></script>
 
-    <!-- Page JS (optional; add when we build UI) -->
+    <!-- Page JS -->
     <script src="/static/js/training-log.js" defer></script>
   </body>
 </html>
