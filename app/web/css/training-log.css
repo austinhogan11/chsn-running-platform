@@ -490,3 +490,62 @@
 @media (max-width: 520px) {
   .form-card .form-grid { grid-template-columns: 1fr; }
 }
+
+/* Make each run row feel clickable */
+.tl-item { cursor: pointer; }
+
+/* Actions: compact rounded square icon buttons */
+.tl-item__actions { display: inline-flex; gap: 8px; align-items: center; }
+
+.tl-item .tl-action.icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 120ms ease;
+}
+
+.tl-item .tl-action.icon-btn:hover {
+  background: color-mix(in srgb, var(--green-600) 14%, transparent);
+  border-color: color-mix(in srgb, var(--green-600) 45%, var(--border));
+  transform: translateY(-1px);
+}
+
+.tl-item .tl-action.icon-btn:active {
+  transform: translateY(0);
+}
+
+/* ---- Filters: Clear button (icon-only, no square outline) ---- */
+#filter-clear {
+  width: 40px;           /* was 32px */
+  height: 40px;          /* was 32px */
+  padding: 0;
+  border: 0;             /* remove square outline */
+  background: transparent;/* no background rectangle */
+  color: inherit;
+  display: grid;
+  place-items: center;
+  font-size: 0;          /* hide text visually */
+  line-height: 0;
+}
+
+#filter-clear::before {
+  content: "";
+  display: block;
+  width: 28px;           /* was 22px */
+  height: 28px;          /* was 22px */
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  /* Circle-X icon (muted) */
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23a6aeb6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 9l-6 6M9 9l6 6"/></svg>');
+  transition: transform 140ms ease, filter 140ms ease;
+}
+
+#filter-clear:hover::before,
+#filter-clear:focus-visible::before {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23169b80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 9l-6 6M9 9l6 6"/></svg>');
+  transform: scale(1.18);   /* was 1.12 */
+}

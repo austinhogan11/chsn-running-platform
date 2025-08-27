@@ -10,9 +10,23 @@ const weekTotalPill = document.getElementById("week-total-pill");
 
 let runs = [];
 
+// ---------- small helpers ----------
+const getRunType = (run) =>
+  (run && (run.type ?? run.run_type ?? run.category)) || ""; // accept multiple keys
+
 // ---------- persistence ----------
 function cacheRuns(){ try{ localStorage.setItem("runs-cache", JSON.stringify(runs)); }catch{} }
-function getCachedRuns(){ try{ const raw = localStorage.getItem("runs-cache"); return raw?JSON.parse(raw):[]; }catch{ return [];}}
+function getCachedRuns(){ try{ const raw = localStorage.getItem("runs-cache"); return raw?JSON.parse(raw):[]; }catch{ return [];} }
+
+function sortRuns(){
+  try{
+    runs.sort((a,b)=>{
+      const da = a && a.started_at ? new Date(a.started_at).getTime() : 0;
+      const db = b && b.started_at ? new Date(b.started_at).getTime() : 0;
+      return db - da; // newest first
+    });
+  }catch{}
+}
 
 // ---------- data load ----------
 async function loadRuns(){
@@ -20,8 +34,10 @@ async function loadRuns(){
     const res = await fetch("/runs");
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     runs = await res.json();
+    sortRuns();
   }catch{
     runs = getCachedRuns();
+    sortRuns();
   }
   cacheRuns();
   renderRuns();
@@ -46,11 +62,15 @@ function renderRuns(){
     return;
   }
 
-  for(const run of runs){
+  for (const run of runs){
     const el = document.createElement("div");
     el.className = "tl-item";
+    // Make the whole row clickable to view details
+    el.setAttribute("data-view", String(run.id));
+
     const mins = run?.duration_s ? Math.round(run.duration_s/60) : 0;
     const p = paceFrom(run);
+    const rType = getRunType(run) || "—";
 
     el.innerHTML = `
       <div class="tl-item__main">
@@ -61,13 +81,24 @@ function renderRuns(){
           • ${mins} min
           • pace ${p} / ${unitAbbrev(run)}
           • elev ${num(run.elevation_ft || 0)} ft
-          • ${escapeHTML(run.type || "Easy Run")}
+          • ${escapeHTML(rType)}
         </div>
       </div>
       <div class="tl-item__actions">
-        <button class="btn-secondary" data-view="${run.id}">View</button>
-        <button class="btn-secondary" data-edit="${run.id}">Edit</button>
-        <button class="btn-secondary" data-delete="${run.id}">Delete</button>
+        <button class="icon-btn tl-action" data-edit="${run.id}" aria-label="Edit" title="Edit">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 20h9"/>
+            <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+          </svg>
+        </button>
+        <button class="icon-btn tl-action" data-delete="${run.id}" aria-label="Delete" title="Delete">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6M14 11v6"/>
+            <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
+          </svg>
+        </button>
       </div>
     `;
     runListEl.appendChild(el);
@@ -324,7 +355,7 @@ function initUnitToggle(){
   const hmsFromDigits = (window.CH?.format?.hmsFromDigits) || function(raw){
     // take LAST 6 digits typed, right-aligned
     const digits = String(raw || "").replace(/\D/g, "");
-    const right  = digits.slice(-6);              // <= key fix vs earlier slice(0,6)
+    const right  = digits.slice(-6);
     const s = right.padStart(6,"0");
     return `${s.slice(0,2)}:${s.slice(2,4)}:${s.slice(4,6)}`;
   };
@@ -354,6 +385,7 @@ function initUnitToggle(){
 // submit
 runForm?.addEventListener("submit", async e=>{
   e.preventDefault();
+  const chosenType = val("f-type") || "";             // from select
   const payload = {
     title:        val("f-title"),
     description:  val("f-description"),
@@ -362,7 +394,9 @@ runForm?.addEventListener("submit", async e=>{
     unit:         document.querySelector('input[name="f-unit"]:checked')?.value || "mi",
     duration_s:   hmsToSeconds(val("f-duration-hms")),
     elevation_ft: parseInt(val("f-elev")||"0",10),
-    type:         val("f-type")
+    // write BOTH keys for server compatibility
+    type:         chosenType,
+    run_type:     chosenType
   };
   const id = val("run-id");
   const url = id ? `/runs/${id}` : "/runs";
@@ -375,11 +409,18 @@ runForm?.addEventListener("submit", async e=>{
 
 // delegated actions
 runListEl?.addEventListener("click", async e=>{
+  // If clicking inside the actions area but not on an action button, ignore
+  const actionsWrap = e.target.closest(".tl-item__actions");
+  if (actionsWrap && !e.target.closest("[data-edit],[data-delete]")) {
+    return;
+  }
   const btn = e.target.closest("[data-view],[data-edit],[data-delete]"); if(!btn) return;
+  if (btn.matches("[data-edit],[data-delete]")) e.stopPropagation();
   const viewId = btn.dataset.view, editId = btn.dataset.edit, delId = btn.dataset.delete;
 
   if(viewId){
     const run = runs.find(r=>String(r.id)===viewId); if(!run) return;
+    const rType = getRunType(run) || "—";
     setText("modal-title", run.title || "Run");
     setHTML("modal-body", `
       <p><strong>Date:</strong> ${new Date(run.started_at).toLocaleString()}</p>
@@ -387,14 +428,15 @@ runListEl?.addEventListener("click", async e=>{
       <p><strong>Duration:</strong> ${secondsToHms(run.duration_s)}</p>
       <p><strong>Pace:</strong> ${paceFrom(run)} / ${unitAbbrev(run)}</p>
       <p><strong>Elevation gain:</strong> ${num(run.elevation_ft)} ft</p>
-      <p><strong>Type:</strong> ${escapeHTML(run.type)}</p>
-      <p><strong>Description:</strong> ${escapeHTML(run.description)}</p>
+      <p><strong>Type:</strong> ${escapeHTML(rType)}</p>
+      <p><strong>Description:</strong> ${escapeHTML(run.description || "—")}</p>
     `);
     openLayer(runModal);
   }
 
   if(editId){
     const run = runs.find(r=>String(r.id)===editId); if(!run) return;
+    const rType = getRunType(run) || "Easy Run";
     setVal("run-id", run.id);
     setText("run-form-title","Edit run");
     setVal("f-title", run.title || "");
@@ -405,7 +447,7 @@ runListEl?.addEventListener("click", async e=>{
     setVal("f-distance", run.distance);
     setUnit(run.unit === "km" ? "km" : "mi");
     setVal("f-duration-hms", secondsToHms(run.duration_s));
-    setVal("f-type", run.type);
+    setVal("f-type", rType);
     setVal("f-elev", String(run.elevation_ft ?? 0));
     openLayer(runFormModal);
   }
