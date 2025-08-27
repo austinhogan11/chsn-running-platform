@@ -8,7 +8,14 @@ const runForm       = document.getElementById("run-form");
 const addBtn        = document.getElementById("add-run-btn");
 const weekTotalPill = document.getElementById("week-total-pill");
 
-let runs = [];
+// *** Filter controls ***
+const filterTypeSel = document.getElementById("filter-type");
+const filterFromInp = document.getElementById("filter-from");
+const filterToInp   = document.getElementById("filter-to");
+const filterClearBtn= document.getElementById("filter-clear");
+
+let runs = [];              // all runs
+let runsFiltered = null;    // current filtered view
 
 // ---------- small helpers ----------
 const getRunType = (run) =>
@@ -40,9 +47,54 @@ async function loadRuns(){
     sortRuns();
   }
   cacheRuns();
-  renderRuns();
-  tlRenderCharts?.();  // draw charts
+
+  applyFilters();           // <- render list using filters
+  tlRenderCharts?.();       // charts remain based on ALL runs
 }
+
+// ---------- filters ----------
+function getFilterValues(){
+  const type = (filterTypeSel?.value || "all").toLowerCase();
+  const from = filterFromInp?.value ? new Date(`${filterFromInp.value}T00:00:00`) : null;
+  const toInc= filterToInp?.value   ? new Date(`${filterToInp.value}T00:00:00`) : null;
+
+  // make "to" inclusive by adding a day and using < endExclusive
+  const endExclusive = toInc ? new Date(toInc.getTime() + 24*60*60*1000) : null;
+  return { type, from, endExclusive };
+}
+
+function applyFilters(){
+  const { type, from, endExclusive } = getFilterValues();
+
+  runsFiltered = runs.filter(r => {
+    // type
+    if (type !== "all") {
+      const rt = getRunType(r).toLowerCase();
+      if (rt !== type) return false;
+    }
+    // dates
+    if (from || endExclusive) {
+      if (!r?.started_at) return false;
+      const t = new Date(r.started_at);
+      if (from && t < from) return false;
+      if (endExclusive && t >= endExclusive) return false;
+    }
+    return true;
+  });
+
+  renderRuns(runsFiltered);
+}
+
+// wire filter events
+filterTypeSel?.addEventListener("change", applyFilters);
+filterFromInp?.addEventListener("change", applyFilters);
+filterToInp?.addEventListener("change", applyFilters);
+filterClearBtn?.addEventListener("click", () => {
+  if (filterTypeSel) filterTypeSel.value = "all";
+  if (filterFromInp) filterFromInp.value = "";
+  if (filterToInp)   filterToInp.value   = "";
+  applyFilters();
+});
 
 // ---------- list render ----------
 function paceFrom(run){
@@ -53,16 +105,16 @@ function paceFrom(run){
 }
 function unitAbbrev(run){ return (run?.unit === "km") ? "km" : "mi"; }
 
-function renderRuns(){
+function renderRuns(list = runs){
   if(!runListEl) return;
   runListEl.innerHTML = "";
 
-  if(!runs.length){
-    runListEl.innerHTML = `<div class="tl-empty"><p>No runs yet. Add one!</p></div>`;
+  if(!list.length){
+    runListEl.innerHTML = `<div class="tl-empty"><p>No runs match the current filters.</p></div>`;
     return;
   }
 
-  for (const run of runs){
+  for (const run of list){
     const el = document.createElement("div");
     el.className = "tl-item";
     // Make the whole row clickable to view details
@@ -144,7 +196,7 @@ document.addEventListener("keydown", e=>{
 
   function startOfWeek(d) {
     const x = new Date(d);
-    const day = (x.getDay() + 6) % 7; // Mon=0
+       const day = (x.getDay() + 6) % 7; // Mon=0
     x.setHours(0,0,0,0);
     x.setDate(x.getDate() - day);
     return x;
