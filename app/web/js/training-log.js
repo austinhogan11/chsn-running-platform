@@ -1,58 +1,67 @@
-// Training Log UI logic
-const runListEl    = document.getElementById("run-list");
-const runModal     = document.getElementById("run-modal");
-const runFormModal = document.getElementById("run-form-modal");
-const runForm      = document.getElementById("run-form");
-const addBtn       = document.getElementById("add-run-btn");
+// /static/js/training-log.js
+
+// ---------- DOM refs ----------
+const runListEl     = document.getElementById("run-list");
+const runModal      = document.getElementById("run-modal");
+const runFormModal  = document.getElementById("run-form-modal");
+const runForm       = document.getElementById("run-form");
+const addBtn        = document.getElementById("add-run-btn");
 const weekTotalPill = document.getElementById("week-total-pill");
 
 let runs = [];
 
-/* -------------------------- data load/cache -------------------------- */
-function cacheRuns() {
-  try { localStorage.setItem("runs-cache", JSON.stringify(runs)); } catch {}
-}
+// ---------- persistence ----------
+function cacheRuns(){ try{ localStorage.setItem("runs-cache", JSON.stringify(runs)); }catch{} }
+function getCachedRuns(){ try{ const raw = localStorage.getItem("runs-cache"); return raw?JSON.parse(raw):[]; }catch{ return []; }}
 
-async function loadRuns() {
-  try {
+// ---------- data load ----------
+async function loadRuns(){
+  try{
     const res = await fetch("/runs");
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
     runs = await res.json();
-  } catch (e) {
-    // fall back to cache if API is down
-    try {
-      const raw = localStorage.getItem("runs-cache");
-      runs = raw ? JSON.parse(raw) : [];
-    } catch { runs = []; }
+  }catch{
+    runs = getCachedRuns();
   }
   cacheRuns();
   renderRuns();
-  tlRenderCharts(); // keep charts in sync with the same runs array
+  tlRenderCharts?.();  // draw charts
 }
 
-/* -------------------------- list rendering -------------------------- */
-function renderRuns() {
-  if (!runListEl) return;
+// ---------- list render ----------
+function paceFrom(run){
+  const d = Number(run?.distance) || 0;
+  const s = Number(run?.duration_s) || 0;
+  if(d <= 0 || s <= 0) return "—";
+  return secondsToMMSS(Math.round(s/d));
+}
+function unitAbbrev(run){ return (run?.unit === "km") ? "km" : "mi"; }
+
+function renderRuns(){
+  if(!runListEl) return;
   runListEl.innerHTML = "";
 
-  if (!runs.length) {
+  if(!runs.length){
     runListEl.innerHTML = `<div class="tl-empty"><p>No runs yet. Add one!</p></div>`;
     return;
   }
 
-  for (const run of runs) {
+  for(const run of runs){
     const el = document.createElement("div");
     el.className = "tl-item";
-    const mins = Math.round(run.duration_s / 60);
+    const mins = run?.duration_s ? Math.round(run.duration_s/60) : 0;
+    const p = paceFrom(run);
 
     el.innerHTML = `
       <div class="tl-item__main">
-        <div class="tl-item__title">${run.title ?? "Untitled run"}</div>
+        <div class="tl-item__title">${escapeHTML(run.title || "Untitled run")}</div>
         <div class="tl-item__meta">
           ${run.started_at ? new Date(run.started_at).toLocaleString() : "—"}
-          • ${run.distance ?? 0} ${run.unit ?? "mi"}
-          • ${isFinite(mins) ? mins : 0} min
-          • ${run.type ?? "Easy Run"}
+          • ${num(run.distance)} ${unitAbbrev(run)}
+          • ${mins} min
+          • pace ${p} / ${unitAbbrev(run)}
+          • elev ${num(run.elevation_ft || 0)} ft
+          • ${escapeHTML(run.type || "Easy Run")}
         </div>
       </div>
       <div class="tl-item__actions">
@@ -65,19 +74,34 @@ function renderRuns() {
   }
 }
 
-/* -------------------------- modals -------------------------- */
-function openModal(modal)  { if (modal) modal.hidden = false; }
-function closeModal(modal) { if (modal) modal.hidden = true; }
+// ---------- layers (sheet / modal) ----------
+function openLayer(el){
+  if(!el) return;
+  el.hidden = false;
+  if(addBtn) addBtn.style.display = "none";
+}
+function closeLayer(el){
+  if(!el) return;
+  el.hidden = true;
+  if(addBtn) addBtn.style.display = ""; // restore default
+}
 
-document.querySelectorAll("[data-close]").forEach(btn => {
-  btn.addEventListener("click", e => {
-    const modal = e.target.closest(".modal");
-    closeModal(modal);
-  });
+// close buttons work for both .modal and .sheet
+document.querySelectorAll("[data-close]").forEach(btn=>{
+  btn.addEventListener("click", e => closeLayer(e.target.closest(".modal, .sheet")));
+});
+document.addEventListener("click", e=>{
+  if(e.target.classList.contains("modal__backdrop") || e.target.classList.contains("sheet__backdrop")){
+    closeLayer(e.target.closest(".modal, .sheet"));
+  }
+});
+document.addEventListener("keydown", e=>{
+  if(e.key !== "Escape") return;
+  if(runFormModal && !runFormModal.hidden) return closeLayer(runFormModal);
+  if(runModal && !runModal.hidden) return closeLayer(runModal);
 });
 
-/* -------------------------- charts (no libs) -------------------------- */
-// We expose a function tlRenderCharts(rangeKey?) so list/save can call it.
+// ---------- charts (tiny canvas helpers, no libs) ----------
 (function () {
   const WEEKS_12 = "12w";
   const MONTHS_6 = "6m";
@@ -87,243 +111,256 @@ document.querySelectorAll("[data-close]").forEach(btn => {
   const trendCanvas = document.getElementById("trendChart");
   const seg = document.querySelector('[data-seg="trend-range"]');
 
-  // helpers
   function startOfWeek(d) {
     const x = new Date(d);
-    const day = (x.getDay() + 6) % 7; // Monday=0
+    const day = (x.getDay() + 6) % 7; // Mon=0
     x.setHours(0,0,0,0);
     x.setDate(x.getDate() - day);
     return x;
   }
 
-  function buildWeekDailyMiles(list) {
+  function weekDailyMiles(list){
     const days = [0,0,0,0,0,0,0];
     const now = new Date();
-    const weekStart = startOfWeek(now);
-    const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 7);
-
-    for (const r of list) {
-      if (!r?.started_at || r.distance == null) continue;
+    const a = startOfWeek(now);
+    const b = new Date(a); b.setDate(a.getDate()+7);
+    for(const r of list||[]){
+      if(!r?.started_at || r.distance == null) continue;
       const d = new Date(r.started_at);
-      if (d >= weekStart && d < weekEnd) {
-        const idx = (d.getDay() + 6) % 7;
-        const miles = r.unit === "km" ? r.distance * 0.621371 : r.distance;
-        days[idx] += miles;
+      if(d>=a && d<b){
+        const i = (d.getDay()+6)%7;
+        days[i] += (r.unit==="km" ? r.distance*0.621371 : r.distance);
       }
     }
     return days;
   }
 
-  function buildWeeklyTotals(list, rangeKey) {
-    const now = new Date(), totals = [];
-    const endWeek = startOfWeek(now);
-
+  function weeklyTotals(list, rangeKey){
+    const out = [];
+    const end = startOfWeek(new Date());
     let periods = 12;
-    if (rangeKey === MONTHS_6) periods = 26;
-    if (rangeKey === YEARS_1)  periods = 52;
+    if(rangeKey===MONTHS_6) periods = 26;
+    if(rangeKey===YEARS_1)  periods = 52;
 
-    for (let i = periods - 1; i >= 0; i--) {
-      const start = new Date(endWeek); start.setDate(start.getDate() - i * 7);
-      const end   = new Date(start);   end.setDate(start.getDate() + 7);
-
+    for(let i=periods-1;i>=0;i--){
+      const s = new Date(end); s.setDate(s.getDate()-i*7);
+      const e = new Date(s);   e.setDate(s.getDate()+7);
       let sum = 0;
-      for (const r of list) {
-        if (!r?.started_at || r.distance == null) continue;
+      for(const r of list||[]){
+        if(!r?.started_at || r.distance==null) continue;
         const d = new Date(r.started_at);
-        if (d >= start && d < end) {
-          sum += (r.unit === "km" ? r.distance * 0.621371 : r.distance);
-        }
+        if(d>=s && d<e) sum += (r.unit==="km"? r.distance*0.621371 : r.distance);
       }
-      totals.push(sum);
+      out.push(sum);
     }
-    return totals;
+    return out;
   }
 
-  function clearCanvas(c) {
+  function clearCanvas(c){
+    if(!c) return null;
     const ctx = c.getContext("2d");
     const ratio = window.devicePixelRatio || 1;
-    const cssW = c.clientWidth, cssH = c.clientHeight;
-    c.width = Math.floor(cssW * ratio);
-    c.height = Math.floor(cssH * ratio);
+    const w = c.clientWidth, h = c.clientHeight;
+    c.width  = Math.max(1, Math.floor(w*ratio));
+    c.height = Math.max(1, Math.floor(h*ratio));
     ctx.setTransform(ratio,0,0,ratio,0,0);
-    ctx.clearRect(0,0,cssW,cssH);
+    ctx.clearRect(0,0,w,h);
     return ctx;
   }
+  const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
-  function drawBars(c, values, labels) {
-    const ctx = clearCanvas(c);
-    const w = c.clientWidth, h = c.clientHeight;
-    const pad = 24, innerW = w - pad*2, innerH = h - pad*2;
+  function drawBars(c, values, labels){
+    const ctx = clearCanvas(c); if(!ctx) return;
+    const w=c.clientWidth, h=c.clientHeight;
+    const pad=24, W=w-pad*2, H=h-pad*2;
     const max = Math.max(1, ...values);
-    const bw = innerW / values.length * 0.7;
-    const gap = innerW / values.length * 0.3;
+    const bw = W/values.length * 0.7;
+    const gap= W/values.length * 0.3;
 
-    ctx.fillStyle = getCSS("--border");
-    ctx.fillRect(pad, h - pad, innerW, 1);
+    ctx.fillStyle = cssVar("--border");
+    ctx.fillRect(pad, h-pad, W, 1);
 
-    ctx.fillStyle = getCSS("--green-600") || "#169b80";
-    values.forEach((v, i) => {
-      const x = pad + i * (bw + gap) + gap*0.5;
-      const bh = max ? (v / max) * (innerH - 16) : 0;
-      ctx.fillRect(x, h - pad - bh, bw, bh);
+    ctx.fillStyle = cssVar("--green-600") || "#169b80";
+    values.forEach((v,i)=>{
+      const x = pad + i*(bw+gap) + gap*0.5;
+      const bh = max ? (v/max)*(H-16) : 0;
+      ctx.fillRect(x, h-pad-bh, bw, bh);
     });
 
-    ctx.fillStyle = getCSS("--muted");
-    ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+    ctx.fillStyle = cssVar("--muted");
+    ctx.font = "12px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
     ctx.textAlign = "center";
-    labels.forEach((lab, i) => {
-      const x = pad + i * (bw + gap) + gap*0.5 + bw/2;
-      ctx.fillText(lab, x, h - 6);
+    labels.forEach((lab,i)=>{
+      const x = pad + i*(bw+gap) + gap*0.5 + bw/2;
+      ctx.fillText(lab, x, h-6);
     });
   }
 
-  function drawLine(c, values) {
-    const ctx = clearCanvas(c);
-    const w = c.clientWidth, h = c.clientHeight;
-    const pad = 24, innerW = w - pad*2, innerH = h - pad*2;
+  function drawLine(c, values){
+    const ctx = clearCanvas(c); if(!ctx) return;
+    const w=c.clientWidth, h=c.clientHeight;
+    const pad=24, W=w-pad*2, H=h-pad*2;
     const max = Math.max(1, ...values);
-    const step = innerW / Math.max(1, values.length - 1);
+    const step = W/Math.max(1, values.length-1);
 
-    ctx.fillStyle = getCSS("--border");
-    ctx.fillRect(pad, h - pad, innerW, 1);
+    ctx.fillStyle = cssVar("--border");
+    ctx.fillRect(pad, h-pad, W, 1);
 
-    const stroke = getCSS("--green-600") || "#169b80";
+    const stroke = cssVar("--green-600") || "#169b80";
     ctx.strokeStyle = stroke;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    values.forEach((v, i) => {
-      const x = pad + i * step;
-      const y = h - pad - (max ? (v / max) * (innerH - 16) : 0);
-      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    values.forEach((v,i)=>{
+      const x = pad + i*step;
+      const y = h - pad - (max ? (v/max)*(H-16) : 0);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
     });
     ctx.stroke();
 
     ctx.fillStyle = stroke;
-    values.forEach((v, i) => {
-      const x = pad + i * step;
-      const y = h - pad - (max ? (v / max) * (innerH - 16) : 0);
-      ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
+    values.forEach((v,i)=>{
+      const x = pad + i*step;
+      const y = h - pad - (max ? (v/max)*(H-16) : 0);
+      ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();
     });
   }
 
-  function getCSS(varName) {
-    return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
-  }
-
-  function updateWeekTotalPill(weekMiles) {
-    const total = weekMiles.reduce((a,b)=>a+b,0);
-    if (weekTotalPill) weekTotalPill.textContent = `${Math.round(total)} mi`;
-  }
-
-  // expose a callable renderer that uses the global `runs`
-  window.tlRenderCharts = function tlRenderCharts(rangeKey = WEEKS_12) {
-    if (!weekCanvas || !trendCanvas) return;
-    const week = buildWeekDailyMiles(runs);
+  window.tlRenderCharts = function tlRenderCharts(range = WEEKS_12){
+    const week = weekDailyMiles(runs);
     drawBars(weekCanvas, week, ["M","T","W","T","F","S","S"]);
-    updateWeekTotalPill(week);
 
-    const totals = buildWeeklyTotals(runs, rangeKey);
-    drawLine(trendCanvas, totals);
+    const total = week.reduce((a,b)=>a+b,0);
+    if(weekTotalPill) weekTotalPill.textContent = `${total.toFixed(1)} mi`;
 
-    // update seg active
-    seg?.querySelectorAll(".seg__btn")?.forEach(btn => {
-      btn.classList.toggle("is-active", btn.dataset.range === rangeKey);
+    drawLine(trendCanvas, weeklyTotals(runs, range));
+
+    seg?.querySelectorAll(".seg__btn")?.forEach(b=>{
+      const active = b.dataset.range === range;
+      b.classList.toggle("is-active", active);
+      b.setAttribute("aria-selected", active ? "true" : "false");
     });
   };
 
-  seg?.addEventListener("click", (e) => {
+  seg?.addEventListener("click", e=>{
     const btn = e.target.closest(".seg__btn");
-    if (!btn) return;
-    tlRenderCharts(btn.dataset.range);
+    if(btn) tlRenderCharts(btn.dataset.range);
   });
 
-  window.addEventListener("resize", () => {
+  window.addEventListener("resize", ()=>{
     const active = seg?.querySelector(".seg__btn.is-active")?.dataset.range || WEEKS_12;
     tlRenderCharts(active);
   });
 })();
 
-/* -------------------------- add/edit/delete -------------------------- */
-addBtn?.addEventListener("click", () => {
-  if (!runForm) return;
+// ---------- Add/Edit flow ----------
+addBtn?.addEventListener("click", ()=>{
+  if(!runForm) return;
   runForm.reset();
-  document.getElementById("run-id").value = "";
-  document.getElementById("run-form-title").textContent = "Add run";
-  openModal(runFormModal);
+  setText("run-form-title","Add run");
+
+  const now = new Date();
+  setVal("run-id","");
+  setVal("f-date", now.toISOString().slice(0,10));
+  setVal("f-time", `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`);
+  setVal("f-duration-hms","00:00:00");
+  setVal("f-elev","0");
+  const mi = document.getElementById("unit-mi"); if(mi) mi.checked = true;
+
+  openLayer(runFormModal);
 });
 
-runForm?.addEventListener("submit", async (e) => {
+// smart HH:MM:SS typing
+document.getElementById("f-duration-hms")?.addEventListener("input", e=>{
+  const digits = (e.target.value.replace(/\D/g,"") || "").slice(0,6);
+  const s = digits.padStart(6,"0");
+  e.target.value = `${s.slice(0,2)}:${s.slice(2,4)}:${s.slice(4,6)}`;
+});
+
+// submit
+runForm?.addEventListener("submit", async e=>{
   e.preventDefault();
-
-  const id = document.getElementById("run-id").value;
   const payload = {
-    title:        document.getElementById("f-title").value,
-    description:  document.getElementById("f-description").value,
-    started_at:   document.getElementById("f-started").value,
-    distance:     parseFloat(document.getElementById("f-distance").value),
-    unit:         document.getElementById("f-unit").value,
-    duration_s:   parseInt(document.getElementById("f-duration").value, 10),
-    type:         document.getElementById("f-type").value
+    title:        val("f-title"),
+    description:  val("f-description"),
+    started_at:   `${val("f-date")}T${val("f-time")}:00`,
+    distance:     parseFloat(val("f-distance")),
+    unit:         document.querySelector('input[name="f-unit"]:checked')?.value || "mi",
+    duration_s:   hmsToSeconds(val("f-duration-hms")),
+    elevation_ft: parseInt(val("f-elev")||"0",10),
+    type:         val("f-type")
   };
-
+  const id = val("run-id");
   const url = id ? `/runs/${id}` : "/runs";
   const method = id ? "PUT" : "POST";
 
-  await fetch(url, {
-    method,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-
-  closeModal(runFormModal);
-  await loadRuns(); // refresh list & charts
+  await fetch(url, { method, headers: {"Content-Type":"application/json"}, body: JSON.stringify(payload) });
+  closeLayer(runFormModal);
+  await loadRuns();
 });
 
-runListEl?.addEventListener("click", async (e) => {
-  const btn = e.target.closest("[data-view],[data-edit],[data-delete]");
-  if (!btn) return;
+// delegated actions
+runListEl?.addEventListener("click", async e=>{
+  const btn = e.target.closest("[data-view],[data-edit],[data-delete]"); if(!btn) return;
+  const viewId = btn.dataset.view, editId = btn.dataset.edit, delId = btn.dataset.delete;
 
-  const viewId = btn.getAttribute("data-view");
-  const editId = btn.getAttribute("data-edit");
-  const delId  = btn.getAttribute("data-delete");
-
-  if (viewId) {
-    const run = runs.find(r => String(r.id) === String(viewId));
-    if (!run) return;
-    document.getElementById("modal-title").textContent = run.title ?? "Run";
-    document.getElementById("modal-body").innerHTML = `
-      <p><strong>Date:</strong> ${run.started_at ? new Date(run.started_at).toLocaleString() : "—"}</p>
-      <p><strong>Distance:</strong> ${run.distance ?? 0} ${run.unit ?? "mi"}</p>
-      <p><strong>Duration:</strong> ${Math.round((run.duration_s ?? 0)/60)} min</p>
-      <p><strong>Type:</strong> ${run.type ?? "Easy Run"}</p>
-      <p><strong>Description:</strong> ${run.description ?? "—"}</p>
-    `;
-    openModal(runModal);
+  if(viewId){
+    const run = runs.find(r=>String(r.id)===viewId); if(!run) return;
+    setText("modal-title", run.title || "Run");
+    setHTML("modal-body", `
+      <p><strong>Date:</strong> ${new Date(run.started_at).toLocaleString()}</p>
+      <p><strong>Distance:</strong> ${num(run.distance)} ${unitAbbrev(run)}</p>
+      <p><strong>Duration:</strong> ${secondsToHms(run.duration_s)}</p>
+      <p><strong>Pace:</strong> ${paceFrom(run)} / ${unitAbbrev(run)}</p>
+      <p><strong>Elevation gain:</strong> ${num(run.elevation_ft)} ft</p>
+      <p><strong>Type:</strong> ${escapeHTML(run.type)}</p>
+      <p><strong>Description:</strong> ${escapeHTML(run.description)}</p>
+    `);
+    openLayer(runModal);
   }
 
-  if (editId) {
-    const run = runs.find(r => String(r.id) === String(editId));
-    if (!run) return;
-    document.getElementById("run-id").value        = run.id;
-    document.getElementById("f-title").value       = run.title ?? "";
-    document.getElementById("f-description").value = run.description ?? "";
-    document.getElementById("f-started").value     = run.started_at ? run.started_at.slice(0,16) : "";
-    document.getElementById("f-distance").value    = run.distance ?? "";
-    document.getElementById("f-unit").value        = run.unit ?? "mi";
-    document.getElementById("f-duration").value    = run.duration_s ?? "";
-    document.getElementById("f-type").value        = run.type ?? "Easy Run";
-
-    document.getElementById("run-form-title").textContent = "Edit run";
-    openModal(runFormModal);
+  if(editId){
+    const run = runs.find(r=>String(r.id)===editId); if(!run) return;
+    setVal("run-id", run.id);
+    setText("run-form-title","Edit run");
+    setVal("f-title", run.title || "");
+    setVal("f-description", run.description || "");
+    const d = new Date(run.started_at);
+    setVal("f-date", d.toISOString().slice(0,10));
+    setVal("f-time", `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`);
+    setVal("f-distance", run.distance);
+    document.getElementById(run.unit==="km" ? "unit-km" : "unit-mi").checked = true;
+    setVal("f-duration-hms", secondsToHms(run.duration_s));
+    setVal("f-type", run.type);
+    setVal("f-elev", String(run.elevation_ft ?? 0));
+    openLayer(runFormModal);
   }
 
-  if (delId) {
-    if (confirm("Delete this run?")) {
-      await fetch(`/runs/${delId}`, { method: "DELETE" });
-      await loadRuns();
-    }
+  if(delId && confirm("Delete this run?")){
+    await fetch(`/runs/${delId}`,{method:"DELETE"});
+    await loadRuns();
   }
 });
 
-/* -------------------------- init -------------------------- */
+// ---------- helpers ----------
+function val(id){ return document.getElementById(id)?.value || ""; }
+function setVal(id,v){ const el=document.getElementById(id); if(el) el.value=v; }
+function setText(id,v){ const el=document.getElementById(id); if(el) el.textContent=v; }
+function setHTML(id,v){ const el=document.getElementById(id); if(el) el.innerHTML=v; }
+function num(n){ return Number.isFinite(+n)?+n:0; }
+function escapeHTML(s=""){ return String(s).replace(/[&<>"']/g,c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[c])); }
+function hmsToSeconds(hms){
+  const m = /^(\d{2}):(\d{2}):(\d{2})$/.exec(hms||"");
+  if(!m) return 0;
+  return (+m[1])*3600 + (+m[2])*60 + (+m[3]);
+}
+function secondsToHms(sec=0){
+  const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=sec%60;
+  return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+}
+function secondsToMMSS(sec=0){
+  const m=Math.floor(sec/60), s=sec%60;
+  return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+}
+
+// ---------- init ----------
 loadRuns();

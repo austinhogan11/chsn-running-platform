@@ -23,27 +23,27 @@
           <h1>Training Log</h1>
         </header>
 
-        <!-- Pinned charts row -->
+        <!-- Charts -->
         <section class="tl-row tl-row--charts">
           <article class="card tl-card tl-card--chart" aria-labelledby="week-chart-title">
             <div class="tl-card__head">
               <h2 id="week-chart-title">This week</h2>
               <div class="pill" id="week-total-pill">0 mi</div>
             </div>
-            <canvas id="weekChart" height="140"></canvas>
+            <canvas id="weekChart" height="140" aria-label="Mon–Sun daily mileage"></canvas>
             <p class="muted small">Mon–Sun daily mileage</p>
           </article>
 
           <article class="card tl-card tl-card--chart" aria-labelledby="trend-chart-title">
             <div class="tl-card__head">
               <h2 id="trend-chart-title">Mileage trend</h2>
-              <div class="seg" data-seg="trend-range">
-                <button class="seg__btn is-active" data-range="12w">12 wks</button>
-                <button class="seg__btn" data-range="6m">6 mo</button>
-                <button class="seg__btn" data-range="1y">1 yr</button>
+              <div class="seg" data-seg="trend-range" role="tablist" aria-label="Trend range">
+                <button class="seg__btn is-active" data-range="12w" role="tab" aria-selected="true">12 wks</button>
+                <button class="seg__btn" data-range="6m" role="tab" aria-selected="false">6 mo</button>
+                <button class="seg__btn" data-range="1y" role="tab" aria-selected="false">1 yr</button>
               </div>
             </div>
-            <canvas id="trendChart" height="140"></canvas>
+            <canvas id="trendChart" height="140" aria-label="Weekly totals trend"></canvas>
             <p class="muted small">Weekly totals</p>
           </article>
         </section>
@@ -72,77 +72,85 @@
           </div>
 
           <div class="filter filter--actions">
-            <button id="filter-clear" class="btn-secondary">Clear</button>
+            <button id="filter-clear" class="btn-secondary" type="button">Clear</button>
           </div>
         </section>
 
         <!-- Run list -->
-        <section class="tl-row">
+        <section class="tl-row" aria-label="Runs">
           <div id="run-list" class="tl-list card tl-card">
-            <div class="tl-empty">
-              <p>No runs match the current filters.</p>
-            </div>
+            <div class="tl-empty"><p>No runs match the current filters.</p></div>
           </div>
         </section>
       </div>
 
-      <!-- View Run Modal (details) -->
-      <div id="run-modal" class="modal" hidden>
+      <!-- View Run (details) -->
+      <div id="run-modal" class="modal" hidden aria-modal="true" role="dialog" aria-labelledby="modal-title">
         <div class="modal__backdrop" data-close></div>
         <div class="modal__card card">
           <header class="modal__head">
             <h3 id="modal-title">Run details</h3>
-            <button class="icon-btn" aria-label="Close" data-close>&times;</button>
+            <button class="icon-btn" aria-label="Close details" data-close type="button">&times;</button>
           </header>
           <div id="modal-body" class="modal__body"><!-- filled by JS --></div>
         </div>
       </div>
 
-      <!-- Create / Edit Run Modal -->
-      <div id="run-form-modal" class="modal" hidden>
+      <!-- Create / Edit Run Modal (centered card) -->
+      <div id="run-form-modal" class="modal" hidden aria-modal="true" role="dialog" aria-labelledby="run-form-title">
         <div class="modal__backdrop" data-close></div>
-        <div class="modal__card card">
+        <div class="modal__card card form-card">
           <header class="modal__head">
-            <h3 id="run-form-title">Add run</h3>
-            <button class="icon-btn" aria-label="Close" data-close>&times;</button>
+            <h1 id="run-form-title">Add run</h1>
+            <button class="icon-btn" aria-label="Close form" data-close type="button">&times;</button>
           </header>
 
-          <form id="run-form" class="form-grid">
+          <form id="run-form" class="form-grid" autocomplete="off">
             <input type="hidden" id="run-id" />
 
-            <label>
+            <!-- Title -->
+            <label class="span-2">
               <span>Title</span>
               <input id="f-title" type="text" placeholder="Morning easy" required />
             </label>
 
+            <!-- Description -->
             <label class="span-2">
               <span>Description</span>
-              <textarea id="f-description" placeholder="How it felt, route, etc." rows="3"></textarea>
+              <textarea id="f-description" placeholder="How it felt, route, etc." rows="4"></textarea>
+            </label>
+
+            <!-- Date / Time -->
+            <label>
+              <span>Date</span>
+              <input id="f-date" type="date" required />
             </label>
 
             <label>
-              <span>Date &amp; time</span>
-              <input id="f-started" type="datetime-local" required />
+              <span>Time</span>
+              <input id="f-time" type="time" step="60" required />
             </label>
 
+            <!-- Distance / Duration (side-by-side) -->
             <label>
               <span>Distance</span>
-              <input id="f-distance" type="number" step="0.01" min="0" placeholder="5.00" required />
+              <div class="input-with-toggle">
+                <input id="f-distance" type="number" step="0.01" min="0" placeholder="5.00" required />
+                <div class="unit-toggle" role="group" aria-label="Unit">
+                  <input type="radio" name="f-unit" id="unit-mi" value="mi" checked />
+                  <label for="unit-mi" class="pill">mi</label>
+                  <input type="radio" name="f-unit" id="unit-km" value="km" />
+                  <label for="unit-km" class="pill">km</label>
+                </div>
+              </div>
             </label>
 
             <label>
-              <span>Unit</span>
-              <select id="f-unit">
-                <option value="mi">mi</option>
-                <option value="km">km</option>
-              </select>
+              <span>Duration (HH:MM:SS)</span>
+              <input id="f-duration-hms" inputmode="numeric" placeholder="00:00:00" />
             </label>
 
-            <label>
-              <span>Duration (sec)</span>
-              <input id="f-duration" type="number" min="0" step="1" placeholder="2500" required />
-            </label>
-
+            <!-- Run type / Elevation gain (side-by-side) -->
             <label>
               <span>Run type</span>
               <select id="f-type" required>
@@ -153,9 +161,13 @@
               </select>
             </label>
 
+            <label>
+              <span>Elevation gain (ft)</span>
+              <input id="f-elev" type="number" step="1" min="0" value="0" />
+            </label>
+
             <div class="form-actions span-2">
-              <button type="button" class="btn-secondary" data-close>Cancel</button>
-              <button type="submit" class="btn-primary">Save</button>
+              <button type="submit" class="btn-primary btn-primary--wide">Save</button>
             </div>
           </form>
         </div>
@@ -164,7 +176,7 @@
 
     <!-- Floating Add Run button -->
     <button id="add-run-btn" class="fab" type="button" aria-label="Add run" title="Add run">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
         <path d="M12 5v14M5 12h14"/>
       </svg>
     </button>

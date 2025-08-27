@@ -1,27 +1,22 @@
-/* /static/css/training-log.css */
+/* /static/css/training-log.css  — cleaned */
 
-/* ---------- Page header ---------- */
+/* =============== Page header =============== */
 .tl-header {
   display: grid;
   justify-items: center;
   margin-bottom: 16px;
 }
 
-/* ---------- Rows & cards ---------- */
+/* =============== Rows & cards =============== */
 .tl-row {
   display: grid;
   gap: 14px;
   margin-bottom: 14px;
 }
 
-.tl-row--charts {
-  grid-template-columns: 1fr;
-}
-
+.tl-row--charts { grid-template-columns: 1fr; }
 @media (min-width: 920px) {
-  .tl-row--charts {
-    grid-template-columns: 1fr 1fr;
-  }
+  .tl-row--charts { grid-template-columns: 1fr 1fr; }
 }
 
 .card {
@@ -30,17 +25,17 @@
   border-radius: 14px;
   box-shadow: var(--card-shadow);
 }
+.tl-card { padding: 18px; }
 
-.tl-card {
-  padding: 18px;
-}
-
+/* Chart cards */
+.tl-card--chart { min-height: 260px; }
 .tl-card--chart canvas {
   width: 100%;
+  height: 230px;          /* fixed visual height */
   display: block;
 }
 
-/* card header line */
+/* Card header */
 .tl-card__head {
   display: flex;
   align-items: center;
@@ -49,7 +44,7 @@
   margin-bottom: 10px;
 }
 
-/* ---------- Pills & seg buttons ---------- */
+/* =============== Pills & segmented buttons =============== */
 .pill {
   display: inline-flex;
   align-items: center;
@@ -62,10 +57,7 @@
   border: 1px solid color-mix(in srgb, var(--green-600) 40%, transparent);
 }
 
-.seg {
-  display: inline-flex;
-  gap: 6px;
-}
+.seg { display: inline-flex; gap: 6px; }
 .seg__btn {
   height: 28px;
   padding: 0 10px;
@@ -83,27 +75,18 @@
   border-color: var(--green-600);
 }
 
-/* ---------- Filters ---------- */
+/* =============== Filters =============== */
 .tl-row--filters {
   display: grid;
   grid-template-columns: 1fr;
   gap: 12px;
 }
-
 @media (min-width: 720px) {
-  .tl-row--filters {
-    grid-template-columns: 1fr 1fr 1fr auto;
-  }
+  .tl-row--filters { grid-template-columns: 1fr 1fr 1fr auto; }
 }
 
-.filter {
-  display: grid;
-  gap: 6px;
-}
-
-.filter--actions {
-  align-content: end;
-}
+.filter { display: grid; gap: 6px; }
+.filter--actions { align-content: end; }
 
 #filter-type,
 #filter-from,
@@ -116,85 +99,7 @@
   padding: 0 10px;
 }
 
-.btn-secondary {
-  height: var(--control-h, 44px);
-  padding: 0 16px;
-  border-radius: var(--control-radius, 10px);
-  border: 1px solid var(--input-border);
-  background: var(--surface);
-  color: var(--text);
-  cursor: pointer;
-}
-.btn-secondary:hover { border-color: var(--green-500); }
-
-/* ---------- List ---------- */
-.tl-list { padding: 0; }
-.tl-list .tl-empty {
-  text-align: center;
-  color: var(--muted);
-  padding: 18px;
-}
-
-.run {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 6px 16px;
-  padding: 16px 18px;
-  border-top: 1px solid var(--border);
-  cursor: pointer;
-}
-.run:first-child { border-top: 0; }
-
-.run__title {
-  font-weight: 700;
-}
-.run__meta,
-.run__desc {
-  color: var(--muted);
-  font-size: .95rem;
-}
-.run__type {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--green-500) 10%, transparent);
-  font-weight: 600;
-}
-.run:hover { background: color-mix(in srgb, var(--green-500) 6%, transparent); }
-
-/* ---------- Modal ---------- */
-.modal[hidden] { display: none; }
-.modal {
-  position: fixed; inset: 0; z-index: 60;
-  display: grid; place-items: center;
-}
-.modal__backdrop {
-  position: absolute; inset: 0;
-  background: rgba(0,0,0,.45);
-}
-.modal__card {
-  position: relative;
-  width: min(720px, 92vw);
-  max-height: 88vh;
-  overflow: auto;
-  padding: 0;
-}
-.modal__head {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
-}
-.modal__body { padding: 16px; }
-
-/* ---------- Utilities ---------- */
-.small { font-size: .92rem; }
-.muted { color: var(--muted); }
-
-/* ======= Add below to /static/css/training-log.css ======= */
-
-/* --- Shared button styles --- */
+/* =============== Buttons =============== */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -222,19 +127,16 @@
   border-color: var(--green-500);
 }
 
-.btn-secondary {
-  /* already defined above, keep hover consistent */
-  box-shadow: none;
-}
+.btn-secondary { box-shadow: none; }
 
 .btn-danger {
-  background: #ef4444; /* red-500 */
+  background: #ef4444;
   border-color: #ef4444;
   color: #fff;
 }
 .btn-danger:hover { background: #dc2626; border-color: #dc2626; }
 
-/* Small icon-only buttons (e.g., inline edit/delete) */
+/* Icon-only */
 .icon-btn {
   display: inline-grid;
   place-items: center;
@@ -249,127 +151,276 @@
 }
 .icon-btn:hover { border-color: var(--green-500); color: var(--green-500); }
 
-/* --- Form controls (for Add/Edit run modal) --- */
+/* Wide primary like Pace Calculator */
+.btn-primary--wide { width: 100%; height: 48px; font-weight: 700; border-radius: 12px; }
+
+/* =============== Run list =============== */
+.tl-list { padding: 0; }
+.tl-list .tl-empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 18px;
+}
+
+/* Unified row markup (.tl-item used by JS) */
+.tl-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 16px;
+  padding: 16px 18px;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+}
+.tl-item:first-child { border-top: 0; }
+.tl-item__title { font-weight: 700; }
+.tl-item__meta  { color: var(--muted); font-size: .95rem; }
+.tl-item__actions { display: inline-flex; gap: 8px; align-items: center; }
+.tl-item:hover { background: color-mix(in srgb, var(--green-500) 6%, transparent); }
+
+/* =============== Modals =============== */
+.modal[hidden] { display: none !important; }
+.modal {
+  position: fixed; inset: 0; z-index: 60;
+  display: grid; place-items: center;
+}
+.modal__backdrop {
+  position: absolute; inset: 0;
+  background: color-mix(in srgb, #000 65%, transparent);
+}
+.modal__card {
+  position: relative;
+  width: min(760px, 92vw);
+  max-height: 88vh;
+  overflow: auto;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
+.modal__head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.modal__head h1,
+.modal__head h3 {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  margin: 0;
+  text-align: center;
+  font-weight: 700;
+  line-height: 1.2;
+  pointer-events: none; /* keep the area clickable for the close button */
+}
+.modal__head .icon-btn {
+  position: relative;
+  z-index: 1; /* sits above the centered title */
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 28px;
+  line-height: 1;
+}
+.modal__head .icon-btn:hover {
+  background: color-mix(in srgb, var(--green-600) 14%, transparent);
+  border-color: color-mix(in srgb, var(--green-600) 45%, var(--border));
+}
+.modal__body {
+  padding: 20px 20px 24px;
+}
+.modal__body .form-grid {
+  row-gap: 14px;
+  column-gap: 16px;
+}
+
+/* Full-page sheet (form) */
+.modal--sheet .modal__card {
+  width: min(640px, 92vw);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 24px 20px;
+  border-radius: 16px;
+  margin: 6vh auto 0 auto;
+}
+.modal--sheet .modal__head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.modal--sheet .modal__head h1 {
+  text-align: center;
+  justify-self: center;
+  font-size: 28px;
+  font-weight: 700;
+}
+.modal--sheet .modal__head .icon-btn { justify-self: end; }
+
+/* =============== Form controls =============== */
 .form-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 12px;
 }
-
-@media (min-width: 680px) {
-  .form-grid--two {
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-}
-
-.field {
+.modal__card .form-grid {
   display: grid;
-  gap: 6px;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
 }
+.modal__card .form-grid .span-2 { grid-column: 1 / -1; }
+@media (max-width: 560px) {
+  .modal__card .form-grid { grid-template-columns: 1fr; }
+}
+/* Form layout in sheet */
+.form-card .form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+}
+.form-card .form-grid .span-2 { grid-column: 1 / -1; }
 
-.field label {
+.form-card label span {
+  display: block;
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+.modal__card label span {
+  display: block;
+  margin: 0 0 6px;
   font-weight: 600;
 }
 
-.field input[type="text"],
-.field input[type="datetime-local"],
-.field input[type="number"],
-.field select,
-.field textarea {
-  height: var(--control-h, 44px);
-  padding: 0 12px;
-  border: 1px solid var(--input-border);
-  border-radius: var(--control-radius, 10px);
-  background: var(--bg);
-  color: var(--text);
-  font-size: var(--control-font, 0.95rem);
-  transition: border-color 160ms ease, box-shadow 160ms ease;
-}
-
-.field textarea {
-  height: auto;
-  min-height: 96px;
-  padding: 10px 12px;
-  resize: vertical;
-}
-
-.field input:focus,
-.field select:focus,
-.field textarea:focus {
-  outline: none;
-  border-color: var(--green-500);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--green-500) 22%, transparent);
-}
-
-/* Form action row */
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 8px;
-}
-
-/* --- Modal polish --- */
-.modal__card {
-  background: var(--surface);
+/* Inputs (match Pace Calculator tone) */
+.form-card input[type="text"],
+.form-card input[type="number"],
+.form-card input[type="date"],
+.form-card input[type="time"],
+.form-card textarea,
+.form-card select,
+#f-duration-hms {
+  width: 100%;
+  padding: 14px 14px;
+  border-radius: 12px;
+  background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: var(--card-shadow);
-  overflow: hidden; /* keeps header border-radius clean */
+  color: var(--text);
+}
+.modal__card input[type="text"],
+.modal__card input[type="number"],
+.modal__card input[type="date"],
+.modal__card input[type="time"],
+.modal__card textarea,
+.modal__card select,
+.modal__card #f-duration-hms {
+  width: 100%;
+  padding: 14px 14px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.form-card textarea { resize: vertical; }
+.modal__card input:focus,
+.modal__card select:focus,
+.modal__card textarea:focus {
+  outline: 2px solid var(--green-600);
+  outline-offset: 0;
+  border-color: transparent;
+}
+.form-card input:focus,
+.form-card select:focus,
+.form-card textarea:focus {
+  outline: 2px solid var(--green-600);
+  outline-offset: 0;
+  border-color: transparent;
 }
 
-.modal__head h3 {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 700;
+/* Inputs a bit cushier in modal */
+.form-grid input,
+.form-grid select,
+.form-grid textarea {
+  border-radius: 12px;
+  background: var(--bg);
 }
 
-/* Close button inside modal header (optional) */
-.modal__close {
-  margin-left: auto;
+/* Duration field (monospaced feel) */
+#f-duration-hms {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  font-feature-settings: "tnum" 1;
 }
 
-/* --- Run list inline actions (edit/delete) --- */
-.run {
-  position: relative;
-}
-
-/* Place actions at row end; show on hover for desktop, always visible on touch widths */
-.run__actions {
-  display: inline-flex;
-  gap: 8px;
+/* Distance + unit toggle combo */
+.input-with-toggle {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
   align-items: center;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .run__actions { opacity: 0; transition: opacity 160ms ease; }
-  .run:hover .run__actions { opacity: 1; }
+/* Segmented unit toggle */
+.unit-toggle {
+  display: inline-grid;
+  grid-auto-flow: column;
+  gap: 8px;
+  background: var(--surface-2);
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+.unit-toggle {
+  position: relative;
+  overflow: hidden;
+}
+.unit-toggle::before {
+  content: "";
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 48px;              /* matches label width below */
+  height: calc(100% - 12px);
+  border-radius: 10px;
+  background: var(--green-600);
+  transition: transform 180ms ease;
+  z-index: 0;
+}
+.unit-toggle:has(#unit-km:checked)::before {
+  transform: translateX(calc(100% + 8px));
+}
+.unit-toggle .pill {
+  position: relative;
+  z-index: 1;
+  width: 48px;
+  min-width: 48px;
+  text-align: center;
+  border: 1px solid transparent;
+  transition: color 180ms ease;
+}
+.unit-toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.unit-toggle input:checked + .pill {
+  color: #fff;
+  background: transparent;  /* visual handled by ::before */
+  border-color: transparent;
 }
 
-/* Keep chips readable */
-.run__type {
-  border: 1px solid color-mix(in srgb, var(--green-600) 35%, transparent);
-  background: color-mix(in srgb, var(--green-500) 12%, transparent);
-}
+/* =============== Utilities =============== */
+.small { font-size: .92rem; }
+.muted { color: var(--muted); }
 
-/* Optional: run-type color accents */
-.type--easy   { background: color-mix(in srgb, #10b981 18%, transparent); border-color: #10b981; }
-.type--long   { background: color-mix(in srgb, #22c55e 18%, transparent); border-color: #22c55e; }
-.type--workout{ background: color-mix(in srgb, #3b82f6 18%, transparent); border-color: #3b82f6; }
-.type--race   { background: color-mix(in srgb, #f59e0b 18%, transparent); border-color: #f59e0b; }
-
-/* --- Utility: compact meta rows in modal/details --- */
-.meta-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0,1fr));
-  gap: 8px 16px;
-}
-@media (min-width: 640px) {
-  .meta-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
-}
-
-/* --- Floating Add Run Button --- */
+/* =============== Floating Add Run button =============== */
 .fab {
   position: fixed;
   right: 24px;
@@ -412,17 +463,9 @@
     height: 52px;
   }
 }
-/* Charts: keep a tidy, consistent height */
-.tl-card--chart {
-  min-height: 240px;
-}
-.tl-card--chart canvas {
-  width: 100%;
-  height: 220px;           /* fixed visual height */
-  display: block;
-}
+.hidden { display: none !important; }
 
-/* Make sure a hidden modal cannot block clicks */
-.modal[hidden] {
-  display: none !important;
+/* =============== Responsive polish =============== */
+@media (max-width: 520px) {
+  .form-card .form-grid { grid-template-columns: 1fr; }
 }
