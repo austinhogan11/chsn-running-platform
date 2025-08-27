@@ -192,7 +192,7 @@
   width: min(760px, 92vw);
   max-height: 88vh;
   overflow: auto;
-  padding: 0;
+  padding: 16px; /* interior breathing room between border and content */
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -200,27 +200,28 @@
   overflow: hidden;
 }
 .modal__head {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 12px;
+  position: relative;
+  display: grid;
+  place-items: center;
   padding: 16px 20px;
   border-bottom: 1px solid var(--border);
-  position: relative;
 }
+
+/* center the title (h1 or h3) */
 .modal__head h1,
 .modal__head h3 {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 70%;
   margin: 0;
   text-align: center;
   font-weight: 700;
   line-height: 1.2;
-  pointer-events: none; /* keep the area clickable for the close button */
 }
+
+/* big X, pinned to the right */
 .modal__head .icon-btn {
-  position: relative;
-  z-index: 1; /* sits above the centered title */
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
   width: 52px;
   height: 52px;
   border-radius: 12px;
@@ -229,13 +230,17 @@
   color: var(--text);
   font-size: 28px;
   line-height: 1;
+  display: grid;
+  place-items: center;
 }
 .modal__head .icon-btn:hover {
   background: color-mix(in srgb, var(--green-600) 14%, transparent);
   border-color: color-mix(in srgb, var(--green-600) 45%, var(--border));
 }
+
+/* =============== Form controls =============== */
 .modal__body {
-  padding: 20px 20px 24px;
+  padding: 24px;
 }
 .modal__body .form-grid {
   row-gap: 14px;
@@ -274,9 +279,14 @@
 .modal__card .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px 16px;
+  gap: 18px 18px;
 }
 .modal__card .form-grid .span-2 { grid-column: 1 / -1; }
+.modal__card .form-actions {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
 @media (max-width: 560px) {
   .modal__card .form-grid { grid-template-columns: 1fr; }
 }
@@ -310,7 +320,7 @@
   width: 100%;
   padding: 14px 14px;
   border-radius: 12px;
-  background: var(--surface-2);
+  background: var(--bg);
   border: 1px solid var(--border);
   color: var(--text);
 }
@@ -324,7 +334,7 @@
   width: 100%;
   padding: 14px 14px;
   border-radius: 12px;
-  background: var(--surface-2);
+  background: var(--bg);
   border: 1px solid var(--border);
   color: var(--text);
 }
@@ -367,54 +377,65 @@
   align-items: center;
 }
 
-/* Segmented unit toggle */
-.unit-toggle {
-  display: inline-grid;
-  grid-auto-flow: column;
-  gap: 8px;
-  background: var(--surface-2);
-  padding: 6px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-}
+/* Segmented unit toggle — sliding highlight like Pace Calculator */
 .unit-toggle {
   position: relative;
-  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* two equal cells */
+  align-items: center;
+  gap: 0;
+  padding: 4px;
+  width: fit-content;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
 }
+
+/* Slider pill */
 .unit-toggle::before {
   content: "";
   position: absolute;
-  top: 6px;
-  left: 6px;
-  width: 48px;              /* matches label width below */
-  height: calc(100% - 12px);
-  border-radius: 10px;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 8px);
+  border-radius: 8px;
   background: var(--green-600);
-  transition: transform 180ms ease;
+  transition: transform 200ms ease;
   z-index: 0;
 }
-.unit-toggle:has(#unit-km:checked)::before {
-  transform: translateX(calc(100% + 8px));
-}
-.unit-toggle .pill {
-  position: relative;
-  z-index: 1;
-  width: 48px;
-  min-width: 48px;
-  text-align: center;
-  border: 1px solid transparent;
-  transition: color 180ms ease;
-}
+
+/* Slide right when km checked */
+.unit-toggle:has(#unit-km:checked)::before { transform: translateX(100%); }
+
+/* hide radios (labels sit over slider) */
 .unit-toggle input {
   position: absolute;
   opacity: 0;
   pointer-events: none;
 }
-.unit-toggle input:checked + .pill {
-  color: #fff;
-  background: transparent;  /* visual handled by ::before */
-  border-color: transparent;
+
+.unit-toggle .pill {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: auto;
+  padding: 6px 14px;
+  border-radius: 8px;
+  text-align: center;
+  background: transparent;        /* non-selected stays neutral */
+  color: var(--text);
+  border: 1px solid transparent;
+  user-select: none;
+  cursor: pointer;
 }
+
+.unit-toggle label.pill { text-align: center; }
+
+/* selected text switches to white; background is provided by the slider */
+#unit-mi:checked + label.pill,
+#unit-km:checked + label.pill { color: #fff; }
 
 /* =============== Utilities =============== */
 .small { font-size: .92rem; }

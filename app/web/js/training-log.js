@@ -12,7 +12,7 @@ let runs = [];
 
 // ---------- persistence ----------
 function cacheRuns(){ try{ localStorage.setItem("runs-cache", JSON.stringify(runs)); }catch{} }
-function getCachedRuns(){ try{ const raw = localStorage.getItem("runs-cache"); return raw?JSON.parse(raw):[]; }catch{ return []; }}
+function getCachedRuns(){ try{ const raw = localStorage.getItem("runs-cache"); return raw?JSON.parse(raw):[]; }catch{ return [];}}
 
 // ---------- data load ----------
 async function loadRuns(){
@@ -269,12 +269,87 @@ addBtn?.addEventListener("click", ()=>{
   openLayer(runFormModal);
 });
 
-// smart HH:MM:SS typing
-document.getElementById("f-duration-hms")?.addEventListener("input", e=>{
-  const digits = (e.target.value.replace(/\D/g,"") || "").slice(0,6);
-  const s = digits.padStart(6,"0");
-  e.target.value = `${s.slice(0,2)}:${s.slice(2,4)}:${s.slice(4,6)}`;
-});
+// ensure the unit slider updates when we set radios programmatically
+function setUnit(unit){
+  const target = document.getElementById(unit === "km" ? "unit-km" : "unit-mi");
+  if(target){
+    target.checked = true;
+    target.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+}
+
+// init segmented unit control: set data-active and CSS vars for sliding highlight
+function initUnitToggle(){
+  const wrap = document.querySelector(".unit-toggle");
+  if(!wrap) return;
+
+  const mi = document.getElementById("unit-mi");
+  const km = document.getElementById("unit-km");
+  const miLabel = document.querySelector('label[for="unit-mi"]');
+  const kmLabel = document.querySelector('label[for="unit-km"]');
+
+  function positionHighlight(){
+    const active = (km && km.checked) ? "km" : "mi";
+    wrap.dataset.active = active;
+
+    // compute highlight geometry (center the text)
+    const targetLabel = active === "km" ? kmLabel : miLabel;
+    const wrapBox = wrap.getBoundingClientRect();
+    const labBox  = targetLabel?.getBoundingClientRect?.();
+    if (wrapBox && labBox) {
+      const left  = Math.max(0, labBox.left - wrapBox.left);
+      const width = labBox.width;
+      wrap.style.setProperty("--seg-left",  `${left}px`);
+      wrap.style.setProperty("--seg-width", `${width}px`);
+    }
+
+    // accessibility states
+    mi?.setAttribute("aria-checked", active === "mi" ? "true" : "false");
+    km?.setAttribute("aria-checked", active === "km" ? "true" : "false");
+  }
+
+  mi?.addEventListener("change", positionHighlight);
+  km?.addEventListener("change", positionHighlight);
+  window.addEventListener("resize", positionHighlight);
+
+  // initial
+  positionHighlight();
+}
+
+// smart HH:MM:SS typing (mirror pace calculator behavior; right-align last 6 digits)
+(function(){
+  const input = document.getElementById("f-duration-hms");
+  if(!input) return;
+
+  const hmsFromDigits = (window.CH?.format?.hmsFromDigits) || function(raw){
+    // take LAST 6 digits typed, right-aligned
+    const digits = String(raw || "").replace(/\D/g, "");
+    const right  = digits.slice(-6);              // <= key fix vs earlier slice(0,6)
+    const s = right.padStart(6,"0");
+    return `${s.slice(0,2)}:${s.slice(2,4)}:${s.slice(4,6)}`;
+  };
+
+  function formatAndKeepCaretEnd(){
+    const caretAtEnd = document.activeElement === input &&
+                       input.selectionStart === input.value.length;
+    input.value = hmsFromDigits(input.value);
+    if (caretAtEnd) {
+      const end = input.value.length;
+      requestAnimationFrame(()=> input.setSelectionRange(end, end));
+    }
+  }
+
+  input.addEventListener("input",  formatAndKeepCaretEnd);
+  input.addEventListener("change", formatAndKeepCaretEnd);
+
+  input.addEventListener("paste", (e)=>{
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData)?.getData("text") || "";
+    input.value = hmsFromDigits(text);
+    const end = input.value.length;
+    requestAnimationFrame(()=> input.setSelectionRange(end, end));
+  });
+})();
 
 // submit
 runForm?.addEventListener("submit", async e=>{
@@ -328,7 +403,7 @@ runListEl?.addEventListener("click", async e=>{
     setVal("f-date", d.toISOString().slice(0,10));
     setVal("f-time", `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`);
     setVal("f-distance", run.distance);
-    document.getElementById(run.unit==="km" ? "unit-km" : "unit-mi").checked = true;
+    setUnit(run.unit === "km" ? "km" : "mi");
     setVal("f-duration-hms", secondsToHms(run.duration_s));
     setVal("f-type", run.type);
     setVal("f-elev", String(run.elevation_ft ?? 0));
@@ -349,7 +424,7 @@ function setHTML(id,v){ const el=document.getElementById(id); if(el) el.innerHTM
 function num(n){ return Number.isFinite(+n)?+n:0; }
 function escapeHTML(s=""){ return String(s).replace(/[&<>"']/g,c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[c])); }
 function hmsToSeconds(hms){
-  const m = /^(\d{2}):(\d{2}):(\d{2})$/.exec(hms||"");
+  const m = /^(\d{1,2}):(\d{2}):(\d{2})$/.exec(hms||"");
   if(!m) return 0;
   return (+m[1])*3600 + (+m[2])*60 + (+m[3]);
 }
@@ -363,4 +438,5 @@ function secondsToMMSS(sec=0){
 }
 
 // ---------- init ----------
+initUnitToggle();
 loadRuns();
