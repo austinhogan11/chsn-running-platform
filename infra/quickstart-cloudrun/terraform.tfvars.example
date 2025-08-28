@@ -1,0 +1,4 @@
+project_id   = "chsn-running-platform"
+region       = "us-east1"
+service_name = "chsn-running"
+image        = "us-east1-docker.pkg.dev/chsn-running-platform/chsn/chsn-running:YOUR_TAG"
