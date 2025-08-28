@@ -86,10 +86,19 @@ resource "google_cloud_run_v2_service" "service" {
   ]
 }
 
+/*
 # Public access (Invoker for allUsers)
 resource "google_cloud_run_v2_service_iam_member" "public_invoker" {
   name     = google_cloud_run_v2_service.service.name
   location = var.region
   role     = "roles/run.invoker"
   member   = "allUsers"
+}
+*/
+
+resource "google_cloud_run_v2_service_iam_member" "invoker_me" {
+  name     = google_cloud_run_v2_service.service.name
+  location = var.region
+  role     = "roles/run.invoker"
+  member   = "user:chogcp01@gmail.com"
 }
