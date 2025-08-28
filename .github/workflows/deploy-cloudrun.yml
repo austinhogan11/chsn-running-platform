@@ -5,15 +5,9 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
-concurrency:
-  group: deploy-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
-    # Needed for WIF (id-token) and to read the repo
     permissions:
       contents: read
       id-token: write
@@ -30,30 +24,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # --------------------
-      # Auth (prefer WIF)
-      # --------------------
-      # B) Preferred: Workload Identity Federation
-      - name: Auth with Workload Identity Federation
-        if: secrets.GCP_WORKLOAD_IDENTITY_PROVIDER != '' && secrets.GCP_SERVICE_ACCOUNT_EMAIL != ''
+      # ❗ WIF auth (only)
+      - name: Auth with Workload Identity
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
-          # artifact registry & gcloud will use this access token
-          token_format: 'access_token'
-
-      # A) Fallback: Service Account Key JSON (only if provided)
-      - name: Auth with Service Account Key (fallback)
-        if: secrets.GCP_WORKLOAD_IDENTITY_PROVIDER == '' || secrets.GCP_SERVICE_ACCOUNT_EMAIL == ''
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.PROJECT_ID }}
+
+      - name: Verify gcloud auth & project
+        run: |
+          gcloud auth list
+          gcloud config list
+          gcloud services list --enabled | grep -E 'run.googleapis.com|artifactregistry.googleapis.com' || true
 
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker "${REGION}-docker.pkg.dev" -q
@@ -67,29 +54,33 @@ jobs:
           set -euo pipefail
           TAG="$(git rev-parse --short HEAD || date +%s)"
           IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_ID}/${IMAGE_NAME}:${TAG}"
-          echo "IMAGE=${IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "IMAGE=${IMAGE}"
+          echo "IMAGE=${IMAGE}" >> $GITHUB_OUTPUT
 
           docker buildx build \
             --platform linux/amd64 \
             -t "${IMAGE}" \
             --push .
 
+          # Prove the tag exists in AR
+          gcloud artifacts docker tags list "${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_ID}/${IMAGE_NAME}" \
+            --format='table(TAGS,DIGEST,CREATE_TIME)' | head -n 20
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_wrapper: false
 
       - name: Terraform Init
         working-directory: ${{ env.INFRA_DIR }}
-        run: terraform init -input=false
+        run: terraform init -input=false -no-color
 
-      - name: Terraform Apply (deploy Cloud Run)
+      - name: Terraform Apply
         working-directory: ${{ env.INFRA_DIR }}
         env:
           IMAGE: ${{ steps.build.outputs.IMAGE }}
         run: |
           set -euo pipefail
-          terraform apply -auto-approve \
+          echo "Applying with image = ${IMAGE}"
+          terraform apply -auto-approve -no-color \
             -var "project_id=${PROJECT_ID}" \
             -var "region=${REGION}" \
             -var "service_name=${SERVICE_NAME}" \
