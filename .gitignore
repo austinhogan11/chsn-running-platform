@@ -1,25 +1,53 @@
+# =================
 # Python
+# =================
 __pycache__/
 *.py[cod]
 *.egg-info/
-.venv/
-venv/
-.env
+*.pyo
+*.pyd
 .pytest_cache/
 .mypy_cache/
 .coverage
+htmlcov/                # coverage reports
 
-# OS / tooling
+# Virtual environments
+.venv/
+venv/
+env/
+.env                    # local env files
+
+# =================
+# OS / IDE / Tooling
+# =================
 .DS_Store
+*.swp
+*.swo
+*.bak
+*.tmp
+.vscode/
+.idea/
 
+# =================
 # Build artifacts
+# =================
 dist/
 build/
 
-# (future) Frontend + Terraform
+# =================
+# Frontend / JS
+# =================
 node_modules/
+*.log
+
+# =================
+# Terraform
+# =================
 .terraform/
 terraform.tfstate*
+terraform.tfvars
 
-# Project Management Docs
+# =================
+# Project Docs / Management
+# =================
 project-management/

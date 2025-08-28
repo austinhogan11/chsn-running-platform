@@ -87,6 +87,20 @@ We plan to deploy the CHSN Running Platform on Google Cloud Platform (GCP) using
 
 ---
 
+## 🚀 Deployment (Current)
+
+The deployment process we used involved several key steps:
+
+- Created a Google Cloud Platform (GCP) project with billing enabled (using the free trial).
+- Enabled the Artifact Registry and Cloud Run APIs within the project.
+- Built the Docker image locally and pushed it to the Artifact Registry repository.
+- Used Terraform located in `infra/quickstart-cloudrun` to provision the Cloud Run service, set up necessary IAM bindings, and connect the container image.
+- Verified that the service was successfully deployed and accessible via the Cloud Run URL.
+
+**Note:** The service was torn down after verification to avoid ongoing billing charges, but the entire infrastructure is fully reproducible using the provided Terraform configuration.
+
+---
+
 ## 📖 Setup & Usage (Local)
 
 ### 1. Clone repo & create virtual env
