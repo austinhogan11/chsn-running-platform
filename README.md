@@ -101,6 +101,18 @@ The deployment process we used involved several key steps:
 
 ---
 
+### GKE Deployment (Experimental)
+
+As an experiment, we also deployed the platform to Google Kubernetes Engine (GKE) Autopilot mode:
+
+- Provisioned a GKE Autopilot cluster using Terraform under `infra/gke`.
+- Built and pushed the Docker image to Artifact Registry.
+- Applied Kubernetes manifests (`deployment.yaml`, `service.yaml`) to deploy the FastAPI app.
+- Verified pod rollout and service accessibility.
+- Teardown of cluster performed after validation to avoid ongoing costs.
+
+---
+
 ## 📖 Setup & Usage (Local)
 
 ### 1. Clone repo & create virtual env

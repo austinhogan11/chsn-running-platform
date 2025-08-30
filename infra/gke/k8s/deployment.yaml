@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chsn-running
+  namespace: chsn
+  labels:
+    app: chsn-running
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: chsn-running
+  template:
+    metadata:
+      labels:
+        app: chsn-running
+    spec:
+      containers:
+        - name: app
+          image: us-east1-docker.pkg.dev/chsn-running-platform/chsn/chsn-running:latest
+          imagePullPolicy: Always
+          env:
+            - name: PORT
+              value: "8000"
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 10
