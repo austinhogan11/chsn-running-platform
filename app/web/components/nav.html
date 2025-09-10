@@ -1,4 +1,14 @@
+<!--
+  This file defines the navigation rail and global theme toggle for the CHSN Running web app.
+  It includes:
+  - The logo linking to the home page.
+  - The main navigation links for different pages.
+  - A mobile toggle button to expand/collapse the navigation rail.
+  - A theme toggle button to switch between light and dark modes.
+-->
+
 <nav class="rail" aria-label="Primary" aria-expanded="false">
+  <!-- Navigation rail containing logo, toggle button, and navigation links -->
   <div class="rail__logo">
     <a href="/static/index.html" aria-label="Home">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="28" height="28" fill="currentColor" aria-hidden="true">
@@ -8,11 +18,13 @@
     </a>
   </div>
 
+  <!-- Button to toggle the navigation rail on mobile devices -->
   <button class="rail__toggle"
           aria-label="Open navigation"
           aria-expanded="false"
           aria-controls="rail-list">☰</button>
 
+  <!-- List of navigation links for main pages of the app -->
   <ul id="rail-list" class="rail__list">
     <li><a data-page-id="pace-calc" href="/static/pages/pace-calc/index.html">Pace Calculator</a></li>
     <li><a data-page-id="training-log" href="/static/pages/training-log/index.html">Training Log</a></li>
@@ -21,7 +33,7 @@
   </ul>
 </nav>
 
-<!-- Global Theme Toggle -->
+<!-- Global Theme Toggle Button (sun/moon icons) for switching light/dark modes -->
 <button
   id="theme-toggle"
   class="icon-btn"
