@@ -1,3 +1,8 @@
+<!--
+  Training Log page for CHSN Running.
+  Displays weekly charts, mileage trends, filters, run list,
+  and modals for viewing and adding runs.
+-->
 <!doctype html>
 <html lang="en">
   <head>
@@ -6,7 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="Browse and analyze your runs by day, week, and month." />
 
-    <!-- Shared CSS -->
+    <!-- Shared and page-specific CSS includes -->
     <link rel="stylesheet" href="/static/css/tokens.css" />
     <link rel="stylesheet" href="/static/css/base.css" />
     <link rel="stylesheet" href="/static/css/nav.css" />
@@ -17,13 +22,14 @@
     <noscript><p style="text-align:center;color:#c00;">This page requires JavaScript.</p></noscript>
   </head>
   <body data-page="training-log" class="page">
+    <!-- Main content structure with header, charts, filters, and run list -->
     <main>
       <div class="page__container">
         <header class="tl-header">
           <h1>Training Log</h1>
         </header>
 
-        <!-- Charts -->
+        <!-- Week chart and trend chart articles -->
         <section class="tl-row tl-row--charts">
           <article class="card tl-card tl-card--chart" aria-labelledby="week-chart-title">
             <div class="tl-card__head">
@@ -48,7 +54,7 @@
           </article>
         </section>
 
-        <!-- Filters -->
+        <!-- Filters form controls -->
         <section class="tl-row tl-row--filters card tl-card" aria-label="Filters">
           <div class="filter">
             <label for="filter-type">Type</label>
@@ -76,7 +82,7 @@
           </div>
         </section>
 
-        <!-- Run list -->
+        <!-- Run list container -->
         <section class="tl-row" aria-label="Runs">
           <div id="run-list" class="tl-list card tl-card">
             <div class="tl-empty"><p>No runs match the current filters.</p></div>
@@ -84,6 +90,7 @@
         </section>
       </div>
 
+      <!-- Run detail modal and run form modal -->
       <!-- View Run (details) -->
       <div id="run-modal" class="modal" hidden aria-modal="true" role="dialog" aria-labelledby="modal-title">
         <div class="modal__backdrop" data-close></div>
@@ -181,7 +188,7 @@
       </svg>
     </button>
 
-    <!-- Shared JS -->
+    <!-- Shared JS and page JS includes -->
     <script src="/static/js/common/theme.js" defer></script>
     <script src="/static/js/site.js" defer></script>
 

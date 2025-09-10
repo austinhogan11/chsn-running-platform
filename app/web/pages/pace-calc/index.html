@@ -1,3 +1,8 @@
+<!--
+  Pace Calculator page for CHSN Running Platform.
+  This page allows users to calculate the missing value among distance, time, or pace.
+  Users should fill any two of the fields and click Calculate to get the result.
+-->
 <!doctype html>
 <html lang="en">
   <head>
@@ -6,12 +11,12 @@
     <meta name="description" content="Calculate running pace, time, or distance in miles or kilometers." />
     <title>CHSN Pace Calculator</title>
 
-    <!-- Fonts -->
+    <!-- Include fonts for consistent typography across the app -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
 
-    <!-- Styles & JS -->
+    <!-- Include stylesheets and JavaScript files for layout, styling, and functionality -->
     <link rel="stylesheet" href="/static/css/tokens.css" />
     <link rel="stylesheet" href="/static/css/base.css" />
     <link rel="stylesheet" href="/static/css/nav.css" />
@@ -27,11 +32,13 @@
   </head>
   <body data-page="pace-calc">
 
+    <!-- Main content area containing the primary functionality of the page -->
     <main>
       <h1>Pace Calculator</h1>
 
+      <!-- Form for inputting distance, time, and pace to calculate the missing value -->
       <form id="pace-form" autocomplete="off">
-        <!-- Distance -->
+        <!-- Distance input with unit toggle between miles and kilometers -->
         <label for="distance">Distance</label>
         <div class="distance-row">
           <input
@@ -56,7 +63,7 @@
           </div>
         </div>
 
-        <!-- Time -->
+        <!-- Time input field expecting HH:MM:SS format -->
         <label for="time">Time (HH:MM:SS)</label>
         <input
           type="text"
@@ -66,7 +73,7 @@
           placeholder="00:00:00"
         />
 
-        <!-- Pace -->
+        <!-- Pace input field expecting MM:SS per unit -->
         <label for="pace">Pace (MM:SS per unit)</label>
         <input
           type="text"
@@ -76,9 +83,11 @@
           placeholder="00:00"
         />
 
+        <!-- Submit button to trigger calculation -->
         <button type="submit">Calculate</button>
       </form>
 
+      <!-- Area to display the calculation result or instructions -->
       <pre id="result">Fill any two fields and click Calculate.</pre>
     </main>
   </body>
