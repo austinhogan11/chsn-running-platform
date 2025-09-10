@@ -1,3 +1,8 @@
+<!--
+  Home page for CHSN Running web app.
+  Provides entry links to features such as Pace Calculator and,
+  in the future, Training Log.
+-->
 <!doctype html>
 <html lang="en">
   <head>
@@ -5,25 +10,28 @@
     <title>CHSN</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- Shared CSS -->
+    <!-- Shared CSS includes -->
     <link rel="stylesheet" href="/static/css/tokens.css" />
     <link rel="stylesheet" href="/static/css/base.css" />
     <link rel="stylesheet" href="/static/css/nav.css" />
 
+    <!-- Warning message if JavaScript is disabled -->
     <noscript><p style="text-align:center;color:#c00;">This site requires JavaScript.</p></noscript>
   </head>
   <body data-page="home" class="page">
+    <!-- Main content section containing centered card with links -->
     <main>
       <div class="page__container">
         <div class="card" style="padding:24px; text-align:center;">
           <h1>CHSN</h1>
           <p><a href="/static/pages/pace-calc/index.html">Pace Calculator</a></p>
           <!-- soon: <p><a href="/static/pages/training-log/index.html">Training Log</a></p> -->
+          <!-- Commented-out link to Training Log (not yet active) -->
         </div>
       </div>
     </main>
 
-    <!-- Shared JS (injects nav + binds theme toggle) -->
+    <!-- Shared JS includes for nav injection and theme toggle -->
     <script src="/static/js/common/theme.js" defer></script>
     <script src="/static/js/site.js" defer></script>
   </body>
