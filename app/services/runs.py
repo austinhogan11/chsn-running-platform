@@ -1,4 +1,9 @@
-# app/services/runs.py
+"""Service module for managing run records using SQLite.
+
+Provides CRUD operations for run data, backed by a local SQLite database.
+Includes functionality to initialize the database schema, convert time formats,
+and map database rows to Run models.
+"""
 from __future__ import annotations
 import os
 import sqlite3
@@ -12,6 +17,11 @@ _DB_PATH = Path("app/data/app.db")
 
 
 def _ensure_db() -> sqlite3.Connection:
+    """Initialize the SQLite database, ensuring schema and indexes exist.
+
+    Returns:
+        sqlite3.Connection: A connection to the SQLite database.
+    """
     _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(_DB_PATH))
     conn.row_factory = sqlite3.Row
@@ -36,6 +46,14 @@ def _ensure_db() -> sqlite3.Connection:
 
 
 def _sec_to_mmss(sec: int) -> str:
+    """Convert seconds to a MM:SS formatted string.
+
+    Args:
+        sec (int): The number of seconds.
+
+    Returns:
+        str: The time formatted as 'MM:SS'. Returns '00:00' if input is zero or negative.
+    """
     if sec <= 0:
         return "00:00"
     m, s = divmod(int(round(sec)), 60)
@@ -43,13 +61,22 @@ def _sec_to_mmss(sec: int) -> str:
 
 
 class RunsService:
-    """Tiny DAO/service using sqlite3. No external deps."""
+    """Data Access Object (DAO) for run records.
+
+    Provides a simple persistence layer backed by SQLite for storing,
+    retrieving, creating, and deleting run entries.
+    """
 
     def __init__(self) -> None:
         self.conn = _ensure_db()
 
     # ---------- CRUD ----------
     def list_runs(self) -> List[Run]:
+        """Retrieve all runs ordered by start time descending.
+
+        Returns:
+            List[Run]: A list of Run models sorted by started_at descending.
+        """
         cur = self.conn.execute(
             "SELECT id, title, description, started_at, distance, unit, duration_s, pace_s, pace "
             "FROM runs ORDER BY started_at DESC, id DESC"
@@ -58,6 +85,14 @@ class RunsService:
         return items
 
     def get(self, run_id: int) -> Optional[Run]:
+        """Retrieve a single run by its ID.
+
+        Args:
+            run_id (int): The ID of the run to retrieve.
+
+        Returns:
+            Optional[Run]: The Run model if found, otherwise None.
+        """
         cur = self.conn.execute(
             "SELECT id, title, description, started_at, distance, unit, duration_s, pace_s, pace "
             "FROM runs WHERE id = ?",
@@ -67,6 +102,16 @@ class RunsService:
         return self._row_to_model(row) if row else None
 
     def create(self, payload: RunCreate) -> Run:
+        """Create a new run record.
+
+        Computes pace if not provided in the payload.
+
+        Args:
+            payload (RunCreate): The data for the new run.
+
+        Returns:
+            Run: The newly created Run model.
+        """
         # compute pace if not provided
         pace_s = payload.pace_s
         if pace_s is None and payload.distance > 0 and payload.duration_s > 0:
@@ -97,11 +142,24 @@ class RunsService:
         return created
 
     def delete(self, run_id: int) -> None:
+        """Delete a run record by its ID.
+
+        Args:
+            run_id (int): The ID of the run to delete.
+        """
         self.conn.execute("DELETE FROM runs WHERE id = ?", (run_id,))
         self.conn.commit()
 
     # ---------- helpers ----------
     def _row_to_model(self, row: sqlite3.Row) -> Run:
+        """Convert a SQLite row to a Run model instance.
+
+        Args:
+            row (sqlite3.Row): The database row representing a run.
+
+        Returns:
+            Run: The corresponding Run model.
+        """
         data: Dict[str, Any] = dict(row)
         return Run(
             id=int(data["id"]),
