@@ -252,29 +252,61 @@ document.addEventListener("keydown", e=>{
   }
   const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
+  // Build a dynamic Y axis: bottom=0, midpoint=Math.round(top/2), top=Math.ceil(maxValue)
+  function buildYAxis(values){
+    const maxVal = Math.max(0, ...values);
+    const top = Math.ceil(maxVal);              // round UP to nearest whole mile
+    const mid = Math.round(top / 2);            // whole-number midpoint
+    const ticks = top > 0 ? [0, mid, top] : [0];
+    return { top, mid, ticks };
+  }
+
   function drawBars(c, values, labels){
     const ctx = clearCanvas(c); if(!ctx) return;
     const w=c.clientWidth, h=c.clientHeight;
-    const pad=24, W=w-pad*2, H=h-pad*2;
-    const max = Math.max(1, ...values);
-    const bw = W/values.length * 0.7;
-    const gap= W/values.length * 0.3;
+    // Extra left padding to fit Y labels
+    const padLeft=40, pad=24, left=padLeft, right=pad, topPad=pad, bottomPad=pad;
+    const W=w-left-right, H=h-topPad-bottomPad;
 
+    const axis = buildYAxis(values);
+    const toY = (v)=> h - bottomPad - (axis.top ? (v/axis.top)*(H-16) : 0);
+
+    // --- grid baseline ---
     ctx.fillStyle = cssVar("--border");
-    ctx.fillRect(pad, h-pad, W, 1);
+    ctx.fillRect(left, h-bottomPad, W, 1);
 
-    ctx.fillStyle = cssVar("--green-600") || "#169b80";
-    values.forEach((v,i)=>{
-      const x = pad + i*(bw+gap) + gap*0.5;
-      const bh = max ? (v/max)*(H-16) : 0;
-      ctx.fillRect(x, h-pad-bh, bw, bh);
+    // --- Y grid lines + labels (0, mid, top) ---
+    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.fillStyle   = cssVar("--muted") || "#a1a1aa";
+    ctx.font = "12px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
+    ctx.textAlign = "right";
+    axis.ticks.forEach(t=>{
+      const y = toY(t);
+      // grid
+      ctx.beginPath();
+      ctx.moveTo(left, y+0.5);
+      ctx.lineTo(left+W, y+0.5);
+      ctx.stroke();
+      // label
+      ctx.fillText(String(t), left-8, y+4);
     });
 
+    // --- bars ---
+    const bw = W/values.length * 0.7;
+    const gap= W/values.length * 0.3;
+    ctx.fillStyle = cssVar("--green-600") || "#169b80";
+    values.forEach((v,i)=>{
+      const x = left + i*(bw+gap) + gap*0.5;
+      const y = toY(v);
+      const bh = (h - bottomPad) - y;
+      ctx.fillRect(x, y, bw, bh);
+    });
+
+    // --- X labels ---
     ctx.fillStyle = cssVar("--muted");
-    ctx.font = "12px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
     ctx.textAlign = "center";
     labels.forEach((lab,i)=>{
-      const x = pad + i*(bw+gap) + gap*0.5 + bw/2;
+      const x = left + i*(bw+gap) + gap*0.5 + bw/2;
       ctx.fillText(lab, x, h-6);
     });
   }
@@ -282,28 +314,48 @@ document.addEventListener("keydown", e=>{
   function drawLine(c, values){
     const ctx = clearCanvas(c); if(!ctx) return;
     const w=c.clientWidth, h=c.clientHeight;
-    const pad=24, W=w-pad*2, H=h-pad*2;
-    const max = Math.max(1, ...values);
+    const padLeft=40, pad=24, left=padLeft, right=pad, topPad=pad, bottomPad=pad;
+    const W=w-left-right, H=h-topPad-bottomPad;
+
+    const axis = buildYAxis(values);
     const step = W/Math.max(1, values.length-1);
+    const toY = (v)=> h - bottomPad - (axis.top ? (v/axis.top)*(H-16) : 0);
 
+    // baseline
     ctx.fillStyle = cssVar("--border");
-    ctx.fillRect(pad, h-pad, W, 1);
+    ctx.fillRect(left, h-bottomPad, W, 1);
 
+    // Y grid + labels
+    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.fillStyle   = cssVar("--muted") || "#a1a1aa";
+    ctx.font = "12px system-ui,-apple-system,Segoe UI,Roboto,sans-serif";
+    ctx.textAlign = "right";
+    axis.ticks.forEach(t=>{
+      const y = toY(t);
+      ctx.beginPath();
+      ctx.moveTo(left, y+0.5);
+      ctx.lineTo(left+W, y+0.5);
+      ctx.stroke();
+      ctx.fillText(String(t), left-8, y+4);
+    });
+
+    // line path
     const stroke = cssVar("--green-600") || "#169b80";
     ctx.strokeStyle = stroke;
     ctx.lineWidth = 2;
     ctx.beginPath();
     values.forEach((v,i)=>{
-      const x = pad + i*step;
-      const y = h - pad - (max ? (v/max)*(H-16) : 0);
+      const x = left + i*step;
+      const y = toY(v);
       if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
     });
     ctx.stroke();
 
+    // points
     ctx.fillStyle = stroke;
     values.forEach((v,i)=>{
-      const x = pad + i*step;
-      const y = h - pad - (max ? (v/max)*(H-16) : 0);
+      const x = left + i*step;
+      const y = toY(v);
       ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();
     });
   }
