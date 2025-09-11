@@ -24,6 +24,10 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+import os
+from dotenv import load_dotenv
+load_dotenv()
+from app.api import strava as strava_api
 from app.api.pace_calc import router as pace_calc_router
 from app.api.runs import router as runs_router
 
@@ -61,6 +65,7 @@ def create_app() -> FastAPI:
     # API routers (keep router-level prefixes and tags defined in their modules)
     app.include_router(pace_calc_router)
     app.include_router(runs_router)
+    app.include_router(strava_api.router)
 
     # Serve the web UI (built or static assets) at `/static`
     app.mount("/static", StaticFiles(directory=_static_dir(), html=True), name="static")
