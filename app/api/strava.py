@@ -45,7 +45,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional, List
 
 import httpx
-from fastapi import APIRouter, HTTPException, Request, Query
+from fastapi import APIRouter, HTTPException, Request, Query, Body
 from fastapi.responses import RedirectResponse, JSONResponse
 
 router = APIRouter(prefix="/api/strava", tags=["strava"])
@@ -420,3 +420,143 @@ async def preview_activity(athlete_id: Optional[int] = None, activity_id: int = 
         "segments": [],  # could map laps/intervals later
     }
     return JSONResponse(preview)
+
+
+# ========== Bulk Sync ==========
+@router.post("/sync")
+async def sync_all_runs(
+    request: Request,
+    athlete_id: Optional[int] = None,
+    after: Optional[str] = Query(None, description="ISO date, only import activities after this date"),
+    max_import: int = Query(200, ge=1, le=2000, description="Max number of activities to import"),
+    dry_run: bool = Query(False, description="If true, does not create runs; returns what would be imported"),
+):
+    """Bulk-sync Strava **Run** activities into CHSN runs.
+
+    Strategy (safe-by-default):
+    - Paginates through `/athlete/activities` (filtering to Runs).
+    - Consider an activity already imported if there's an existing run on the same
+      local day with distance within 0.02 mi and moving time within 10s.
+      (Heuristic until we add a `source_ref` field on runs.)
+    - For items that look new, call `POST /runs/from-strava` (unless `dry_run=true`).
+
+    Returns summary counts and IDs.
+    """
+    # Resolve athlete and token
+    athlete_id = _resolve_athlete_id(athlete_id)
+    token = await _ensure_token(athlete_id)
+
+    # Base URL for local calls (handles localhost vs 127.0.0.1)
+    base_from_req = f"{request.url.scheme}://{request.url.netloc}"
+
+    # Load existing runs to avoid duplicates
+    existing_keyset = set()
+    try:
+        async with httpx.AsyncClient(timeout=30) as c:
+            r = await c.get(f"{base_from_req}/runs")
+            r.raise_for_status()
+            existing = r.json()
+            for run in existing:
+                dt = run.get("started_at")
+                if not dt:
+                    continue
+                day = dt.split("T", 1)[0]
+                dist = float(run.get("distance") or 0.0)
+                # round to 0.02 mi buckets (~105 ft)
+                dist_key = round(dist / 0.02) * 0.02
+                dur = int(run.get("duration_s") or 0)
+                dur_key = round(dur / 10) * 10
+                existing_keyset.add((day, dist_key, dur_key))
+    except Exception:
+        existing_keyset = set()
+
+    headers = {"Authorization": f"Bearer {token}"}
+
+    def day_key(iso: str) -> str:
+        try:
+            return (iso or "").split("T", 1)[0]
+        except Exception:
+            return ""
+
+    params_base: Dict[str, Any] = {"per_page": 50}
+    if after:
+        try:
+            dt = datetime.fromisoformat(after)
+            params_base["after"] = int(dt.timestamp())
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid 'after' date; use YYYY-MM-DD")
+
+    imported: List[int] = []
+    skipped: List[int] = []
+    already: List[int] = []
+    errors: List[Dict[str, Any]] = []
+
+    remaining = max_import
+    page = 1
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        while remaining > 0:
+            params = dict(params_base)
+            params.update({"page": page})
+            resp = await client.get("https://www.strava.com/api/v3/athlete/activities", headers=headers, params=params)
+            if resp.status_code != 200:
+                break
+            items = resp.json() or []
+            if not items:
+                break
+
+            for it in items:
+                if remaining <= 0:
+                    break
+                if (it.get("type") or "").lower() != "run":
+                    continue
+
+                day = day_key(it.get("start_date_local") or it.get("start_date"))
+                dist_key = round(((it.get("distance") or 0) / M_PER_MI) / 0.02) * 0.02
+                dur_key = round(int(it.get("moving_time") or 0) / 10) * 10
+                key = (day, dist_key, dur_key)
+                if key in existing_keyset:
+                    already.append(it.get("id"))
+                    continue
+
+                if dry_run:
+                    skipped.append(it.get("id"))  # would import
+                    remaining -= 1
+                else:
+                    try:
+                        cr = await client.post(
+                            f"{base_from_req}/runs/from-strava",
+                            json={"activity_id": it.get("id")},
+                            headers={"Content-Type": "application/json"},
+                        )
+                        if cr.status_code in (200, 201):
+                            imported.append(it.get("id"))
+                            existing_keyset.add(key)
+                            remaining -= 1
+                        else:
+                            errors.append({
+                                "activity_id": it.get("id"),
+                                "status": cr.status_code,
+                                "detail": cr.text,
+                            })
+                            remaining -= 1
+                    except Exception as e:
+                        errors.append({"activity_id": it.get("id"), "error": str(e)})
+                        remaining -= 1
+            page += 1
+
+    return JSONResponse(
+        {
+            "ok": True,
+            "summary": {
+                "imported": len(imported),
+                "already": len(already),
+                "would_import": len(skipped) if dry_run else 0,
+                "errors": len(errors),
+            },
+            "imported_ids": imported,
+            "already_ids": already,
+            "would_import_ids": skipped if dry_run else [],
+            "errors": errors,
+        }
+    )
