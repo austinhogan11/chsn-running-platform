@@ -583,9 +583,10 @@ function secondsToMMSS(sec=0){
   return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
 }
 
-// ---- Strava status/link wiring ----
+// ---- Strava status/link + Import button wiring ----
 (function(){
   const link = document.getElementById('strava-status-text');
+  const importBtn = document.getElementById('open-strava-import');
   if(!link) return; // header may not exist on all pages
 
   async function refreshStravaStatus(){
@@ -600,15 +601,16 @@ function secondsToMMSS(sec=0){
         if(j.athlete && j.athlete.firstname){
           link.title = `Connected as ${j.athlete.firstname}${j.athlete.lastname ? ' ' + j.athlete.lastname[0] + '.' : ''}`;
         }
+        if(importBtn) importBtn.style.display = '';
       } else {
         link.textContent = 'Connect to Strava';
         link.classList.remove('is-connected');
         link.style.pointerEvents = 'auto';
         link.style.opacity = '';
         link.title = 'Click to connect your Strava account';
+        if(importBtn) importBtn.style.display = 'none';
       }
     } catch (e) {
-      // Non-fatal; leave default text
       console.warn('Strava status check failed', e);
     }
   }
@@ -620,8 +622,145 @@ function secondsToMMSS(sec=0){
     }
   });
 
+  importBtn?.addEventListener('click', (e)=>{
+    e.preventDefault();
+    // Only open if connected
+    if(link.classList.contains('is-connected')){
+      window.tlOpenStravaImport?.();
+    } else {
+      window.location.href = '/api/strava/connect';
+    }
+  });
+
   // initial check
   refreshStravaStatus();
+})();
+// ---- Strava Import modal wiring ----
+(function(){
+  const modal = document.getElementById('strava-import-modal');
+  if(!modal) return; // modal exists only on Training Log page
+
+  const listEl   = document.getElementById('strava-activity-list');
+  const pageEl   = document.getElementById('strava-page');
+  const prevBtn  = document.getElementById('strava-prev');
+  const nextBtn  = document.getElementById('strava-next');
+  const refreshB = document.getElementById('strava-refresh');
+  const filterEl = document.getElementById('strava-filter');
+  const preview  = document.getElementById('strava-preview');
+  const saveBtn  = document.getElementById('strava-import-save');
+
+  let page = 1;
+  let perPage = 30;
+  let activities = [];
+  let selectedId = null;
+  let selectedItem = null;
+
+  function open(){ openLayer(modal); load(); }
+  function close(){ closeLayer(modal); }
+
+  async function fetchPage(p){
+    const url = `/api/strava/activities?page=${p}&per_page=${perPage}`; // backend defaults to Runs only
+    const res = await fetch(url);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  }
+
+  async function load(){
+    try {
+      activities = await fetchPage(page);
+      renderList();
+      pageEl && (pageEl.textContent = `Page ${page}`);
+      // reset selection on page change
+      selectedId = null; selectedItem = null; saveBtn.disabled = true; preview.innerHTML = '<p class="muted">Select an activity to preview.</p>';
+    } catch(e){
+      listEl.innerHTML = `<li class="muted">Failed to load activities.</li>`;
+      console.error(e);
+    }
+  }
+
+  function renderList(){
+    if(!listEl) return;
+    const q = (filterEl?.value || '').toLowerCase();
+    const filtered = !q ? activities : activities.filter(a => (a.name||'').toLowerCase().includes(q));
+    listEl.innerHTML = '';
+    if(filtered.length === 0){
+      listEl.innerHTML = '<li class="muted">No activities.</li>';
+      return;
+    }
+    for(const a of filtered){
+      const li = document.createElement('li');
+      li.dataset.id = String(a.id);
+      const d = a.start_date ? new Date(a.start_date).toLocaleString() : '';
+      li.innerHTML = `
+        <div><strong>${escapeHTML(a.name||'Run')}</strong></div>
+        <div class="muted small">${d} • ${Number(a.distance_mi||0).toFixed(2)} mi • ${Math.round((a.moving_time_s||0)/60)} min</div>
+      `;
+      li.addEventListener('click', ()=> select(a));
+      listEl.appendChild(li);
+    }
+  }
+
+  async function select(a){
+    selectedId = a.id; selectedItem = a; saveBtn.disabled = true;
+    preview.innerHTML = '<p class="muted">Loading preview…</p>';
+    try{
+      const res = await fetch(`/api/strava/activities/${a.id}/preview`);
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      const j = await res.json();
+      // basic preview render (summary)
+      const s = j.summary || {};
+      const dist = (s.distance_mi ?? 0).toFixed(2);
+      const dur  = secondsToHms(s.duration_s || 0);
+      const pace = s.distance_mi ? secondsToMMSS(Math.round((s.duration_s||0)/s.distance_mi)) : '—';
+      const elev = Math.round(s.elev_gain_ft || 0);
+      const hr   = s.avg_hr ? Math.round(s.avg_hr) : '—';
+      preview.innerHTML = `
+        <h4>${escapeHTML(a.name||'Run')}</h4>
+        <p class="muted small">${a.start_date ? new Date(a.start_date).toLocaleString() : ''}</p>
+        <p><strong>${dist} mi</strong> • ${dur} • pace ${pace} / mi • elev ${elev} ft • HR ${hr}</p>
+        <div class="muted small">Mile splits: ${Array.isArray(j.auto_mile_splits)? j.auto_mile_splits.map(m=>`M${m.mile}:${secondsToMMSS(m.time_s||0)}`).join(', ') : '—'}</div>
+      `;
+      saveBtn.disabled = false;
+    }catch(e){
+      preview.innerHTML = '<p class="muted">Failed to load preview.</p>';
+      console.error(e);
+    }
+  }
+
+  async function save(){
+    if(!selectedId) return;
+    saveBtn.disabled = true;
+    try{
+      const res = await fetch('/runs/from-strava', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ activity_id: selectedId })
+      });
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      // refresh main run list and close
+      await loadRuns();
+      close();
+    }catch(e){
+      alert('Failed to save run from Strava');
+      console.error(e);
+      saveBtn.disabled = false;
+    }
+  }
+
+  // pagination + filter + refresh
+  prevBtn?.addEventListener('click', ()=>{ if(page>1){ page--; load(); } });
+  nextBtn?.addEventListener('click', ()=>{ page++; load(); });
+  refreshB?.addEventListener('click', ()=> load());
+  filterEl?.addEventListener('input', ()=> renderList());
+
+  // close buttons (backdrop and X already have [data-close] handled globally)
+  modal.querySelectorAll('[data-close]')?.forEach(btn=> btn.addEventListener('click', close));
+
+  // save
+  saveBtn?.addEventListener('click', save);
+
+  // expose open on window so header button can call it
+  window.tlOpenStravaImport = open;
 })();
 // ---------- init ----------
 initUnitToggle();

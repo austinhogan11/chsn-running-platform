@@ -26,6 +26,22 @@
       .strava-link { color: var(--text-muted); text-decoration: none; cursor: pointer; transition: color .15s ease; }
       .strava-link:hover { color: #fc4c02; }
       .strava-link.is-connected { color: var(--text-muted); cursor: default; }
+
+      /* Strava import modal layout */
+      .strava-import__columns{display:flex; gap:16px; min-height:420px}
+      .strava-import__list{flex:0 0 300px; border-right:1px solid var(--border); padding-right:12px}
+      .strava-import__preview{flex:1}
+      .list{list-style:none; margin:8px 0; padding:0; max-height:360px; overflow:auto}
+      .list li{padding:8px; border:1px solid var(--border); border-radius:6px; margin-bottom:8px; cursor:pointer}
+      .list li:hover{background:var(--bg-muted)}
+      .modal{position:fixed; inset:0; background:rgba(0,0,0,.35);}
+      .modal[hidden]{display:none !important}
+      .modal__card{width:min(980px,92vw); margin:8vh auto;}
+      .modal__head,.modal__footer{display:flex; align-items:center; justify-content:space-between}
+      .modal__footer{gap:8px}
+      .list__controls{display:flex; gap:8px}
+      .list__paging{display:flex; align-items:center; gap:8px; margin-top:8px}
+      .preview .muted{opacity:.8}
     </style>
 
     <noscript><p style="text-align:center;color:#c00;">This page requires JavaScript.</p></noscript>
@@ -40,6 +56,7 @@
           </div>
           <div class="tl-header__status">
             <a id="strava-status-text" class="strava-link small" href="#" role="button">Connect to Strava</a>
+            <button id="open-strava-import" class="btn-secondary small" type="button" style="margin-left:8px; display:none;">Import</button>
           </div>
         </header>
 
@@ -102,6 +119,41 @@
             <div class="tl-empty"><p>No runs match the current filters.</p></div>
           </div>
         </section>
+      </div>
+
+      <!-- Strava Import Modal -->
+      <div id="strava-import-modal" class="modal" hidden aria-modal="true" role="dialog" aria-labelledby="strava-import-title">
+        <div class="modal__backdrop" data-close></div>
+        <div class="modal__card card">
+          <header class="modal__head">
+            <h3 id="strava-import-title">Import from Strava</h3>
+            <button class="icon-btn" aria-label="Close Strava import" data-close type="button">&times;</button>
+          </header>
+          <div class="modal__body">
+            <div class="strava-import__columns">
+              <aside class="strava-import__list">
+                <div class="list__controls">
+                  <input id="strava-filter" type="text" placeholder="Filter by name…" class="input" />
+                  <button id="strava-refresh" class="btn-secondary" type="button">Refresh</button>
+                </div>
+                <ul id="strava-activity-list" class="list"></ul>
+                <div class="list__paging">
+                  <button id="strava-prev" class="btn-secondary" type="button">Prev</button>
+                  <span id="strava-page" class="muted small">Page 1</span>
+                  <button id="strava-next" class="btn-secondary" type="button">Next</button>
+                </div>
+              </aside>
+              <section class="strava-import__preview">
+                <div id="strava-preview" class="preview">
+                  <p class="muted">Select an activity to preview.</p>
+                </div>
+              </section>
+            </div>
+          </div>
+          <footer class="modal__footer">
+            <button id="strava-import-save" class="btn-primary" type="button" disabled>Save to Training Log</button>
+          </footer>
+        </div>
       </div>
 
       <!-- Run detail modal and run form modal -->
