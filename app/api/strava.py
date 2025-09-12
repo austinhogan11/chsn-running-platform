@@ -180,15 +180,9 @@ async def oauth_callback(
         "athlete": athlete,
     }
 
-    # Clear state cookie after success
-    resp = JSONResponse(
-        {
-            "ok": True,
-            "athlete_id": athlete_id,
-            "athlete": {"firstname": athlete.get("firstname"), "lastname": athlete.get("lastname")},
-            "expires_at": expires_at,
-        }
-    )
+    # On success, redirect back to the Training Log UI
+    redirect_to = "/static/pages/training-log/index.html?strava=connected"
+    resp = RedirectResponse(url=redirect_to, status_code=302)
     resp.delete_cookie("strava_oauth_state")
     _OAUTH_STATES.discard(state or "")
     return resp
