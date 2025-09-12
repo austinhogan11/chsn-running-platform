@@ -69,6 +69,9 @@ SCOPES = ["read", "activity:read"]
 #   Fields: strava_athlete_id, access_token, refresh_token, expires_at
 _TOKEN_STORE: Dict[int, Dict[str, Any]] = {}
 
+# Short‑lived OAuth state store (dev helper in case cookies don't round‑trip)
+_OAUTH_STATES: set[str] = set()
+
 
 def _resolve_athlete_id(maybe_id: Optional[int]) -> int:
     """If an athlete_id is provided, return it; otherwise, if exactly one
@@ -92,10 +95,18 @@ async def connect(request: Request) -> RedirectResponse:
 
     state = uuid.uuid4().hex
     scope = ",".join(SCOPES)
+
+    # Build callback URL from the incoming request to avoid localhost/127.0.0.1 mismatches
+    base_from_req = f"{request.url.scheme}://{request.url.netloc}"
+    callback_url = f"{base_from_req}{CALLBACK_PATH}"
+
+    # Track state in memory as a fallback (cleared on callback)
+    _OAUTH_STATES.add(state)
+
     auth_url = (
         "https://www.strava.com/oauth/authorize"
         f"?client_id={CLIENT_ID}"
-        f"&redirect_uri={CALLBACK_URL}"
+        f"&redirect_uri={callback_url}"
         "&response_type=code"
         f"&scope={scope}"
         "&approval_prompt=auto"
@@ -104,7 +115,7 @@ async def connect(request: Request) -> RedirectResponse:
 
     resp = RedirectResponse(auth_url, status_code=302)
     # Lax is fine for same-site dev; tighten to 'Strict' in prod if you like
-    resp.set_cookie("strava_oauth_state", state, max_age=600, httponly=True, samesite="lax")
+    resp.set_cookie("strava_oauth_state", state, max_age=600, httponly=True, samesite="lax", path="/")
     return resp
 
 
@@ -127,8 +138,12 @@ async def oauth_callback(
 
     # CSRF state check
     cookie_state = request.cookies.get("strava_oauth_state")
-    if not cookie_state or cookie_state != state:
+    valid = (cookie_state and state and cookie_state == state) or (state in _OAUTH_STATES)
+    if not valid:
         raise HTTPException(status_code=400, detail="Invalid or missing OAuth state")
+    # one‑time use
+    if state:
+        _OAUTH_STATES.discard(state)
 
     data = {
         "client_id": CLIENT_ID,
@@ -175,6 +190,7 @@ async def oauth_callback(
         }
     )
     resp.delete_cookie("strava_oauth_state")
+    _OAUTH_STATES.discard(state or "")
     return resp
 
 

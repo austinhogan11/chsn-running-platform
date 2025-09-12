@@ -22,9 +22,9 @@ from typing import Literal
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
-import os
 from dotenv import load_dotenv
 load_dotenv()
 from app.api import strava as strava_api
@@ -69,6 +69,11 @@ def create_app() -> FastAPI:
 
     # Serve the web UI (built or static assets) at `/static`
     app.mount("/static", StaticFiles(directory=_static_dir(), html=True), name="static")
+
+    @app.get("/", include_in_schema=False)
+    def root() -> RedirectResponse:  # pragma: no cover - trivial
+        """Redirect the root to the Training Log UI for convenience."""
+        return RedirectResponse(url="/static/pages/training-log/index.html", status_code=302)
 
     @app.get("/health", response_model=HealthResponse, summary="Health check")
     def health() -> HealthResponse:  # pragma: no cover - trivial

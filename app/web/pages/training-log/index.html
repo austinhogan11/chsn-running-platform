@@ -19,6 +19,15 @@
     <!-- Page CSS -->
     <link rel="stylesheet" href="/static/css/training-log.css" />
 
+    <!-- Font Awesome for Strava icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/Z3u8Oa2vFQX1r0KU4zV7C3M5i3/jM8D4s46HoPazTA/gkGEXVWoxLL3Yx04ec5R1xA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <style>
+      .strava-link { color: var(--text-muted); text-decoration: none; cursor: pointer; transition: color .15s ease; }
+      .strava-link:hover { color: #fc4c02; }
+      .strava-link.is-connected { color: var(--text-muted); cursor: default; }
+    </style>
+
     <noscript><p style="text-align:center;color:#c00;">This page requires JavaScript.</p></noscript>
   </head>
   <body data-page="training-log" class="page">
@@ -26,7 +35,12 @@
     <main>
       <div class="page__container">
         <header class="tl-header">
-          <h1>Training Log</h1>
+          <div class="tl-header__title">
+            <h1>Training Log</h1>
+          </div>
+          <div class="tl-header__status">
+            <a id="strava-status-text" class="strava-link small" href="#" role="button">Connect to Strava</a>
+          </div>
         </header>
 
         <!-- Week chart and trend chart articles -->
@@ -179,7 +193,6 @@
           </form>
         </div>
       </div>
-    </main>
 
     <!-- Floating Add Run button -->
     <button id="add-run-btn" class="fab" type="button" aria-label="Add run" title="Add run">
@@ -187,6 +200,7 @@
         <path d="M12 5v14M5 12h14"/>
       </svg>
     </button>
+    </main>
 
     <!-- Shared JS and page JS includes -->
     <script src="/static/js/common/theme.js" defer></script>

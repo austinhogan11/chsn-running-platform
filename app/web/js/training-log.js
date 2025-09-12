@@ -583,6 +583,46 @@ function secondsToMMSS(sec=0){
   return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
 }
 
+// ---- Strava status/link wiring ----
+(function(){
+  const link = document.getElementById('strava-status-text');
+  if(!link) return; // header may not exist on all pages
+
+  async function refreshStravaStatus(){
+    try {
+      const res = await fetch('/api/strava/status');
+      const j = await res.json();
+      if(j && j.connected){
+        link.textContent = 'Connected to Strava';
+        link.classList.add('is-connected');
+        link.style.pointerEvents = 'none';
+        link.style.opacity = '0.85';
+        if(j.athlete && j.athlete.firstname){
+          link.title = `Connected as ${j.athlete.firstname}${j.athlete.lastname ? ' ' + j.athlete.lastname[0] + '.' : ''}`;
+        }
+      } else {
+        link.textContent = 'Connect to Strava';
+        link.classList.remove('is-connected');
+        link.style.pointerEvents = 'auto';
+        link.style.opacity = '';
+        link.title = 'Click to connect your Strava account';
+      }
+    } catch (e) {
+      // Non-fatal; leave default text
+      console.warn('Strava status check failed', e);
+    }
+  }
+
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    if(!link.classList.contains('is-connected')){
+      window.location.href = '/api/strava/connect';
+    }
+  });
+
+  // initial check
+  refreshStravaStatus();
+})();
 // ---------- init ----------
 initUnitToggle();
 loadRuns();
