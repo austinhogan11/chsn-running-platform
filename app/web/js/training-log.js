@@ -432,17 +432,23 @@ async function renderRunMap(run){
 
   // Initialize map and draw polyline
   _runMapInstance = L.map(mapEl, { zoomControl: false });
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
+  // Dark basemap (CartoDB Dark Matter)
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
   }).addTo(_runMapInstance);
 
-  const line = L.polyline(latlng, { weight: 4, opacity: 0.95 });
+  // Route line (bright teal on dark)
+  const line = L.polyline(latlng, { weight: 4, opacity: 0.95, color: '#2ad2c9' });
   line.addTo(_runMapInstance);
   _runMapInstance.fitBounds(line.getBounds(), { padding: [12, 12] });
 
-  // start/end markers
-  L.circleMarker(latlng[0], { radius: 4 }).addTo(_runMapInstance);
-  L.circleMarker(latlng[latlng.length - 1], { radius: 4 }).addTo(_runMapInstance);
+  // Start (green) and Finish (red) markers
+  const start = latlng[0];
+  const finish = latlng[latlng.length - 1];
+  L.circleMarker(start,  { radius: 5, color: '#00e676', fillColor: '#00e676', fillOpacity: 0.95, weight: 2 })
+    .addTo(_runMapInstance).bindTooltip('Start');
+  L.circleMarker(finish, { radius: 5, color: '#ff5252', fillColor: '#ff5252', fillOpacity: 0.95, weight: 2 })
+    .addTo(_runMapInstance).bindTooltip('Finish');
 }
 
 // ---------- Add/Edit flow ----------
