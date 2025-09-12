@@ -112,11 +112,64 @@ async def connect(request: Request) -> RedirectResponse:
         "&approval_prompt=auto"
         f"&state={state}"
     )
-
     resp = RedirectResponse(auth_url, status_code=302)
-    # Lax is fine for same-site dev; tighten to 'Strict' in prod if you like
-    resp.set_cookie("strava_oauth_state", state, max_age=600, httponly=True, samesite="lax", path="/")
+    # Lax is fine for same-site dev; tighten to 'Strict' in prod if desired
+    resp.set_cookie(
+        "strava_oauth_state",
+        state,
+        max_age=600,
+        httponly=True,
+        samesite="lax",
+        path="/",
+    )
     return resp
+
+# ========== Lightweight Route for Map Rendering ==========
+
+@router.get("/activities/{activity_id}/route")
+async def activity_route(athlete_id: Optional[int] = None, activity_id: int = 0):
+    """Return only the GPS route for an activity (small payload for map rendering).
+
+    Response shape:
+    {
+      "polyline": [[lat, lng], ...],
+      "bounds": {"min_lat": .., "min_lng": .., "max_lat": .., "max_lng": ..}
+    }
+    """
+    athlete_id = _resolve_athlete_id(athlete_id)
+    token = await _ensure_token(athlete_id)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    async with httpx.AsyncClient(timeout=20) as client:
+        streams_r = await client.get(
+            f"https://www.strava.com/api/v3/activities/{activity_id}/streams",
+            headers=headers,
+            params={
+                "keys": "latlng",
+                "key_by_type": "true",
+            },
+        )
+
+    if streams_r.status_code != 200:
+        raise HTTPException(status_code=502, detail={"reason": "route_failed", "streams_status": streams_r.status_code})
+
+    streams = streams_r.json() or {}
+    latlng = streams.get("latlng", {}).get("data", [])
+
+    # Compute simple bounds for convenience
+    if latlng:
+        lats = [p[0] for p in latlng]
+        lngs = [p[1] for p in latlng]
+        bounds = {
+            "min_lat": min(lats),
+            "min_lng": min(lngs),
+            "max_lat": max(lats),
+            "max_lng": max(lngs),
+        }
+    else:
+        bounds = None
+
+    return JSONResponse({"polyline": latlng, "bounds": bounds})
 
 
 @router.get("/oauth/callback")

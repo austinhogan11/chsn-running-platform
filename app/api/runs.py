@@ -73,6 +73,8 @@ class Run(RunIn):
     """Stored run with server-assigned identifier."""
 
     id: str = Field(description="Server-generated identifier (hex string)")
+    source: Optional[str] = Field(default=None, description="Source system for the run (e.g., 'strava')")
+    source_ref: Optional[str] = Field(default=None, description="Reference ID in the source system")
 
 
 class CreateRunFromStravaIn(BaseModel):
@@ -238,7 +240,12 @@ async def create_run_from_strava(payload: CreateRunFromStravaIn = Body(...)) -> 
     )
 
     # Reuse existing creator to get an id and perform uniform validation
-    return create_run(run_in)
+    run_obj = create_run(run_in)
+    # Add source and source_ref to the stored object
+    run_obj.source = "strava"
+    run_obj.source_ref = str(payload.activity_id)
+    DB[run_obj.id] = run_obj
+    return run_obj
 
 
 @router.delete(

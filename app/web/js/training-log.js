@@ -387,6 +387,64 @@ document.addEventListener("keydown", e=>{
   });
 })();
 
+// ---------- run detail map (Leaflet) ----------
+let _runMapInstance = null;
+async function renderRunMap(run){
+  const mapEl = document.getElementById('run-map');
+  if(!mapEl) return;
+
+  // Clean up any previous map instance
+  try { _runMapInstance && _runMapInstance.remove && _runMapInstance.remove(); } catch {}
+  mapEl.innerHTML = '';
+
+  // Determine source/ref
+  const source = run?.source || run?.metadata?.source;
+  const ref    = run?.source_ref || run?.metadata?.source_ref;
+
+  let latlng = null;
+
+  // Prefer Strava route endpoint when we have a source_ref
+  if(source === 'strava' && ref){
+    try{
+      const r = await fetch(`/api/strava/activities/${ref}/route`);
+      if(r.ok){
+        const j = await r.json();
+        if(Array.isArray(j.polyline) && j.polyline.length >= 2) latlng = j.polyline;
+      }
+    }catch(e){ console.warn('Strava route fetch failed', e); }
+  }
+
+  // (Future) If run has its own stored polyline, use it
+  if(!latlng && Array.isArray(run?.polyline) && run.polyline.length >= 2){
+    latlng = run.polyline;
+  }
+
+  if(!latlng){
+    mapEl.innerHTML = '<div class="muted small">No GPS route available.</div>';
+    return;
+  }
+
+  // Guard: ensure Leaflet is available
+  if(typeof window.L === 'undefined'){
+    mapEl.innerHTML = '<div class="muted small">Map library not loaded.</div>';
+    return;
+  }
+
+  // Initialize map and draw polyline
+  _runMapInstance = L.map(mapEl, { zoomControl: false });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(_runMapInstance);
+
+  const line = L.polyline(latlng, { weight: 4, opacity: 0.95 });
+  line.addTo(_runMapInstance);
+  _runMapInstance.fitBounds(line.getBounds(), { padding: [12, 12] });
+
+  // start/end markers
+  L.circleMarker(latlng[0], { radius: 4 }).addTo(_runMapInstance);
+  L.circleMarker(latlng[latlng.length - 1], { radius: 4 }).addTo(_runMapInstance);
+}
+
 // ---------- Add/Edit flow ----------
 addBtn?.addEventListener("click", ()=>{
   if(!runForm) return;
@@ -536,6 +594,7 @@ runListEl?.addEventListener("click", async e=>{
       <p><strong>Description:</strong> ${escapeHTML(run.description || "—")}</p>
     `);
     openLayer(runModal);
+    renderRunMap(run);
   }
 
   if(editId){
