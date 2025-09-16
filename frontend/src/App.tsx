@@ -1,10 +1,23 @@
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, LazyMotion, domAnimation, motion } from 'framer-motion'
 import PaceCalculatorPage from './pages/PaceCalculatorPage'
 import TrainingLogPage from './pages/training-log/TrainingLogPage'
 
 export function App() {
   const location = useLocation()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const view = (params.get('view') || '').toLowerCase()
+
+    if (view === 'training-log' && location.pathname !== '/training-log') {
+      navigate({ pathname: '/training-log', search: location.search }, { replace: true })
+    } else if (view === 'pace-calculator' && location.pathname !== '/pace-calculator') {
+      navigate({ pathname: '/pace-calculator', search: location.search }, { replace: true })
+    }
+  }, [location.pathname, location.search, navigate])
 
   return (
     <LazyMotion features={domAnimation} strict>

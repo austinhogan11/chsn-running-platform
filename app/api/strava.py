@@ -234,7 +234,7 @@ async def oauth_callback(
     }
 
     # On success, redirect back to the Training Log UI
-    redirect_to = "/static/pages/training-log/index.html?strava=connected"
+    redirect_to = "/static/index.html?view=training-log&strava=connected"
     resp = RedirectResponse(url=redirect_to, status_code=302)
     resp.delete_cookie("strava_oauth_state")
     _OAUTH_STATES.discard(state or "")
