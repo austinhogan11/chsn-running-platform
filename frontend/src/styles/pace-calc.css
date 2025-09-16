@@ -1,0 +1,251 @@
+/* ===================== Theme tokens ===================== */
+:root {
+  --card-width: 420px;
+
+  /* Light */
+  --bg: #fdf6e3;
+  --surface: #fffaf0;
+  --text: #111111;
+  --muted: #6b7280;
+  --border: #d1cfc7;        /* card border */
+  --input-border: #cbd5e1;  /* input border (darker in light) */
+  --card-shadow: 0 6px 18px rgba(0,0,0,.06);
+
+  /* Accents */
+  --green-500: #20d4a6;
+  --green-600: #169b80;
+
+  /* control sizes */
+  --control-h: 44px;
+  --control-radius: 10px;
+  --control-font: 0.95rem;
+}
+
+:root[data-theme="dark"] {
+  --bg: #161616;
+  --surface: #1f1f1f;
+  --text: #f3f4f6;
+  --muted: #a1a1aa;
+  --border: #2a2a2a;
+  --input-border: #2a2f37;
+  --card-shadow: none;
+}
+
+/* Respect OS preference unless explicitly overridden */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg: #161616;
+    --surface: #1f1f1f;
+    --text: #f3f4f6;
+    --muted: #a1a1aa;
+    --border: #2a2a2a;
+    --input-border: #2a2f37;
+    --card-shadow: none;
+  }
+}
+
+/* ===================== Layout & typography ===================== */
+.pace-main {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  gap: 12px;
+}
+
+.pace-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.pace-container h1 {
+  margin: 0 0 14px;
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: .2px;
+}
+
+/* ===================== Cards ===================== */
+.pace-container form,
+.pace-container #result {
+  box-shadow: 0 4px 10px rgba(0,0,0,.08);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.pace-container form,
+.pace-container #result {
+  width: var(--card-width);
+  max-width: 92vw;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  /* box-shadow is inherited above */
+}
+
+.pace-container form:hover,
+.pace-container #result:hover {
+  box-shadow: 0 6px 14px rgba(0,0,0,.12);
+  transform: translateY(-1px);
+}
+
+.pace-container form {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+}
+
+.pace-container #result {
+  padding: 16px 18px;
+  margin-top: 16px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ===================== Form controls ===================== */
+.pace-container label {
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  color: var(--text);
+  font-size: .98rem;
+}
+
+.pace-container input {
+  width: 100%;
+  height: var(--control-h);
+  padding: .65rem .75rem;
+  border: 1px solid var(--border);      /* match card border */
+  border-radius: var(--control-radius);
+  background: var(--surface);            /* match card background */
+  color: var(--text);
+  font-size: var(--control-font);
+}
+
+.pace-container input::placeholder { color: var(--muted); }
+
+.pace-container input:focus {
+  outline: none;
+  border-color: var(--green-500);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--green-500) 22%, transparent);
+}
+
+.pace-container #time,
+.pace-container #pace { font-variant-numeric: tabular-nums; }
+
+.pace-container button[type="submit"] {
+  width: 100%;
+  height: var(--control-h);
+  padding: 0 1rem;
+  border: 1px solid transparent;
+  border-radius: var(--control-radius);
+  background: var(--green-600);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pace-container button[type="submit"]:hover { background: var(--green-500); }
+.pace-container button[type="submit"]:disabled { opacity: .6; cursor: not-allowed; }
+
+/* ===================== Theme toggle (top-right) ===================== */
+/* ===================== Distance row ===================== */
+.pace-container .distance-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.pace-container .distance-row input { flex: 1; }
+
+/* ===================== Unit toggle (segmented, with sliding thumb) ===================== */
+.pace-container .unit-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  height: var(--control-h);
+  border: 1px solid var(--input-border);
+  border-radius: var(--control-radius);
+  background: var(--surface);
+  overflow: hidden;
+  padding: 0 3px;
+}
+
+.pace-container .unit-toggle .thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc(50% - 6px);
+  border-radius: 8px;
+  background: var(--green-600);
+  transform: translateX(0);
+  transition: transform 220ms ease;
+  will-change: transform;
+  z-index: 0;
+}
+
+.pace-container .unit-toggle.is-mi .thumb {
+  transform: translateX(0);
+}
+
+.pace-container .unit-toggle.is-km .thumb {
+  transform: translateX(calc(100% + 6px));
+}
+
+.pace-container .unit-toggle label {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 0; /* equal halves */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: .9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pace-container .unit-toggle label span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 12px;
+  border-radius: 8px;
+  color: var(--muted);
+  transition: color 160ms ease;
+}
+
+.pace-container .unit-toggle input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pace-container .unit-toggle.is-mi label:first-of-type span { color: #fff; }
+.pace-container .unit-toggle.is-km label:last-of-type span { color: #fff; }
+.pace-container .unit-toggle.is-mi label:last-of-type span,
+.pace-container .unit-toggle.is-km label:first-of-type span {
+  color: var(--muted);
+}
+
+.copy-link-btn {
+  margin-top: 10px;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text);
+  box-shadow: 0 4px 10px rgba(0,0,0,.08);
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.copy-link-btn:hover {
+  box-shadow: 0 6px 14px rgba(0,0,0,.12);
+  transform: translateY(-1px);
+  border-color: var(--green-500);
+}

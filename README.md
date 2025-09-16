@@ -133,7 +133,21 @@ uvicorn app.main:app --reload
 pytest
 ```
 
-### 4. Build & run with Docker
+### 4. Frontend development (React + Vite)
+The SPA lives in `frontend/` and builds into `app/web/dist` served by FastAPI.
+
+```bash
+# install dependencies (once)
+npm install --prefix frontend
+
+# start the Vite dev server (http://127.0.0.1:5173)
+npm run frontend:dev
+
+# generate production assets consumed by FastAPI
+npm run frontend:build
+```
+
+### 5. Build & run with Docker
 ```bash
 docker build -t chsn-running .
 docker run -p 8000:8000 chsn-running

@@ -1,0 +1,85 @@
+
+
+/* /static/css/base.css */
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  transition: background 180ms ease, color 180ms ease;
+}
+
+/* Shared page shell */
+.page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+main {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  padding: 24px 24px 24px 140px;
+}
+
+.page__container {
+  width: 100%;
+  max-width: var(--page-max);
+}
+
+/* Typography */
+h1 {
+  font-weight: 700;
+  letter-spacing: .2px;
+  margin: 0 0 14px;
+  text-align: center;
+}
+
+/* Card helper */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--card-shadow);
+}
+
+@media (max-width: 900px) {
+  main {
+    padding: 24px;
+  }
+}
+
+#theme-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  padding: 0;
+  box-shadow: var(--card-shadow);
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+#theme-toggle:hover,
+#theme-toggle:focus-visible {
+  border-color: var(--green-500);
+  color: var(--green-500);
+  outline: none;
+}
+
+#theme-toggle .icon { display: none; }
+:root[data-theme="dark"]  #theme-toggle .moon { display: block; }
+:root[data-theme="light"] #theme-toggle .sun,
+:root:not([data-theme])  #theme-toggle .sun { display: block; }

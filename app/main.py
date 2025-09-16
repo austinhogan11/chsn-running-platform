@@ -41,14 +41,18 @@ class HealthResponse(BaseModel):
 
 
 def _static_dir() -> str:
-    """Return the absolute path to the static files directory (`app/web`).
+    """Return the absolute path to the static files directory.
 
-    Using a function keeps resolution logic in one place and makes it easier
-    to test or modify later if the web root moves.
+    Prefers the Vite build output (``app/web/dist``). Falls back to the legacy
+    ``app/web`` directory to keep local development working before the first
+    frontend build runs.
     """
 
-    # `app/main.py` -> parent is `app/`; append `web` to get `app/web`.
-    return str((Path(__file__).parent / "web").resolve())
+    base = Path(__file__).parent / "web"
+    dist = base / "dist"
+    if (dist / "index.html").exists():
+        return str(dist.resolve())
+    return str(base.resolve())
 
 
 def create_app() -> FastAPI:
@@ -73,7 +77,7 @@ def create_app() -> FastAPI:
     @app.get("/", include_in_schema=False)
     def root() -> RedirectResponse:  # pragma: no cover - trivial
         """Redirect the root to the Training Log UI for convenience."""
-        return RedirectResponse(url="/static/pages/training-log/index.html", status_code=302)
+        return RedirectResponse(url="/static/index.html", status_code=302)
 
     @app.get("/health", response_model=HealthResponse, summary="Health check")
     def health() -> HealthResponse:  # pragma: no cover - trivial
