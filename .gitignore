@@ -31,8 +31,11 @@ env/
 # =================
 # Build artifacts
 # =================
+# top-level build dirs
 dist/
 build/
+# nested build output from the React/Vite app served by FastAPI
+app/web/dist/
 
 # =================
 # Frontend / JS
