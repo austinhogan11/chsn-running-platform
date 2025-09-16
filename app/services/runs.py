@@ -7,6 +7,7 @@ and map database rows to Run models.
 from __future__ import annotations
 import os
 import sqlite3
+import threading
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 
@@ -23,7 +24,8 @@ def _ensure_db() -> sqlite3.Connection:
         sqlite3.Connection: A connection to the SQLite database.
     """
     _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(_DB_PATH))
+    # Allow use across threads (FastAPI/Starlette can execute handlers in threadpool)
+    conn = sqlite3.connect(str(_DB_PATH), check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute(
         """
@@ -35,6 +37,9 @@ def _ensure_db() -> sqlite3.Connection:
           distance REAL NOT NULL,
           unit TEXT CHECK(unit IN ('mi','km')) NOT NULL DEFAULT 'mi',
           duration_s INTEGER NOT NULL,
+          elevation_ft REAL,
+          source TEXT,
+          source_ref TEXT,
           pace_s INTEGER,
           pace TEXT
         );
@@ -69,6 +74,13 @@ class RunsService:
 
     def __init__(self) -> None:
         self.conn = _ensure_db()
+        self._lock = threading.RLock()
+
+    def close(self) -> None:
+        try:
+            self.conn.close()
+        except Exception:
+            pass
 
     # ---------- CRUD ----------
     def list_runs(self) -> List[Run]:
@@ -77,8 +89,9 @@ class RunsService:
         Returns:
             List[Run]: A list of Run models sorted by started_at descending.
         """
-        cur = self.conn.execute(
-            "SELECT id, title, description, started_at, distance, unit, duration_s, pace_s, pace "
+        with self._lock:
+            cur = self.conn.execute(
+            "SELECT id, title, description, started_at, distance, unit, duration_s, elevation_ft, source, source_ref, pace_s, pace "
             "FROM runs ORDER BY started_at DESC, id DESC"
         )
         items = [self._row_to_model(r) for r in cur.fetchall()]
@@ -93,8 +106,9 @@ class RunsService:
         Returns:
             Optional[Run]: The Run model if found, otherwise None.
         """
-        cur = self.conn.execute(
-            "SELECT id, title, description, started_at, distance, unit, duration_s, pace_s, pace "
+        with self._lock:
+            cur = self.conn.execute(
+            "SELECT id, title, description, started_at, distance, unit, duration_s, elevation_ft, source, source_ref, pace_s, pace "
             "FROM runs WHERE id = ?",
             (run_id,),
         )
@@ -118,10 +132,11 @@ class RunsService:
             pace_s = int(round(payload.duration_s / payload.distance))
         pace = payload.pace or (_sec_to_mmss(pace_s) if pace_s else None)
 
-        self.conn.execute(
+        with self._lock:
+            self.conn.execute(
             """
-            INSERT INTO runs (title, description, started_at, distance, unit, duration_s, pace_s, pace)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO runs (title, description, started_at, distance, unit, duration_s, elevation_ft, source, source_ref, pace_s, pace)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 payload.title,
@@ -130,6 +145,9 @@ class RunsService:
                 float(payload.distance),
                 payload.unit.value if isinstance(payload.unit, UnitEnum) else str(payload.unit),
                 int(payload.duration_s),
+                float(payload.elevation_ft) if payload.elevation_ft is not None else None,
+                payload.source,
+                payload.source_ref,
                 int(pace_s) if pace_s else None,
                 pace,
             ),
@@ -147,8 +165,48 @@ class RunsService:
         Args:
             run_id (int): The ID of the run to delete.
         """
-        self.conn.execute("DELETE FROM runs WHERE id = ?", (run_id,))
+        with self._lock:
+            self.conn.execute("DELETE FROM runs WHERE id = ?", (run_id,))
+            self.conn.commit()
+
+    def update(self, run_id: int, payload: RunCreate) -> Optional[Run]:
+        """Replace a run by ID with new values.
+
+        Returns the updated Run or None if not found.
+        """
+        if not self.get(run_id):
+            return None
+
+        pace_s = payload.pace_s
+        if pace_s is None and payload.distance > 0 and payload.duration_s > 0:
+            pace_s = int(round(payload.duration_s / payload.distance))
+        pace = payload.pace or (_sec_to_mmss(pace_s) if pace_s else None)
+
+        with self._lock:
+            self.conn.execute(
+            """
+            UPDATE runs
+            SET title = ?, description = ?, started_at = ?, distance = ?, unit = ?, duration_s = ?,
+                elevation_ft = ?, source = ?, source_ref = ?, pace_s = ?, pace = ?
+            WHERE id = ?
+            """,
+            (
+                payload.title,
+                payload.description,
+                payload.started_at.isoformat(),
+                float(payload.distance),
+                payload.unit.value if isinstance(payload.unit, UnitEnum) else str(payload.unit),
+                int(payload.duration_s),
+                float(payload.elevation_ft) if payload.elevation_ft is not None else None,
+                payload.source,
+                payload.source_ref,
+                int(pace_s) if pace_s else None,
+                pace,
+                run_id,
+            ),
+        )
         self.conn.commit()
+        return self.get(run_id)
 
     # ---------- helpers ----------
     def _row_to_model(self, row: sqlite3.Row) -> Run:
@@ -169,6 +227,9 @@ class RunsService:
             distance=float(data["distance"]),
             unit=UnitEnum(data["unit"]),
             duration_s=int(data["duration_s"]),
+            elevation_ft=float(data["elevation_ft"]) if data.get("elevation_ft") is not None else None,
+            source=data.get("source"),
+            source_ref=data.get("source_ref"),
             pace_s=int(data["pace_s"]) if data["pace_s"] is not None else None,
             pace=data.get("pace"),
         )

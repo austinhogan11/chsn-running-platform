@@ -36,8 +36,8 @@ export function RunDetailModal({ open, run, onClose }: RunDetailModalProps) {
       setStatus('loading')
       let latlng: [number, number][] | null = null
 
-      const source = run.source || (run.metadata && (run.metadata as any).source)
-      const ref = run.source_ref || (run.metadata && (run.metadata as any).source_ref)
+      const source = (run as any).source || ((run as any).metadata && (run as any).metadata.source)
+      const ref = (run as any).source_ref || ((run as any).metadata && (run as any).metadata.source_ref)
 
       if (source === 'strava' && ref) {
         try {

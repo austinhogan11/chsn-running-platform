@@ -1,0 +1,15 @@
+version: "3.9"
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      # Provide your own values or export them before running compose
+      - STRAVA_CLIENT_ID=${STRAVA_CLIENT_ID}
+      - STRAVA_CLIENT_SECRET=${STRAVA_CLIENT_SECRET}
+      - BASE_URL=${BASE_URL:-http://localhost:8000}
+    volumes:
+      # Persist local SQLite database outside the container
+      - ./app/data:/app/app/data
+    restart: unless-stopped

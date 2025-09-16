@@ -30,6 +30,8 @@ load_dotenv()
 from app.api import strava as strava_api
 from app.api.pace_calc import router as pace_calc_router
 from app.api.runs import router as runs_router
+from contextlib import asynccontextmanager
+from app.services.runs import RunsService
 
 __all__ = ["app", "create_app"]
 
@@ -55,6 +57,20 @@ def _static_dir() -> str:
     return str(base.resolve())
 
 
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    # Initialize shared services
+    app.state.runs_service = RunsService()
+    try:
+        yield
+    finally:
+        # Best-effort close
+        try:
+            app.state.runs_service.close()
+        except Exception:
+            pass
+
+
 def create_app() -> FastAPI:
     """Application factory.
 
@@ -64,7 +80,7 @@ def create_app() -> FastAPI:
         A configured FastAPI instance with routers and static files mounted.
     """
 
-    app = FastAPI(title="Chosen Running", version="0.1.0")
+    app = FastAPI(title="Chosen Running", version="0.1.0", lifespan=_lifespan)
 
     # API routers (keep router-level prefixes and tags defined in their modules)
     app.include_router(pace_calc_router)

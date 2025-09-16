@@ -37,6 +37,15 @@ build/
 # nested build output from the React/Vite app served by FastAPI
 app/web/dist/
 
+# Local SQLite database (persist on developer machine; do not commit)
+app/data/
+*.db
+
+# Node/Yarn/PNPM caches that may appear locally
+.pnpm-store/
+.yarn/
+**/.parcel-cache/
+
 # =================
 # Frontend / JS
 # =================

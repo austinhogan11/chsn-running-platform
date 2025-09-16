@@ -47,6 +47,7 @@ from typing import Any, Dict, Optional, List
 import httpx
 from fastapi import APIRouter, HTTPException, Request, Query, Body
 from fastapi.responses import RedirectResponse, JSONResponse
+from app.settings import settings
 
 router = APIRouter(prefix="/api/strava", tags=["strava"])
 
@@ -55,9 +56,9 @@ M_PER_MI = 1609.344
 FT_PER_M = 3.28084
 
 # --- Config helpers ---
-CLIENT_ID = os.getenv("STRAVA_CLIENT_ID")
-CLIENT_SECRET = os.getenv("STRAVA_CLIENT_SECRET")
-BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
+CLIENT_ID = settings.STRAVA_CLIENT_ID or os.getenv("STRAVA_CLIENT_ID")
+CLIENT_SECRET = settings.STRAVA_CLIENT_SECRET or os.getenv("STRAVA_CLIENT_SECRET")
+BASE_URL = settings.BASE_URL or os.getenv("BASE_URL", "http://localhost:8000")
 CALLBACK_PATH = "/api/strava/oauth/callback"
 CALLBACK_URL = f"{BASE_URL.rstrip('/')}{CALLBACK_PATH}"
 

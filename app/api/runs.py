@@ -17,8 +17,7 @@ NOTE: The in-memory `DB` is a placeholder. It resets on process restart.
 """
 
 from datetime import datetime
-from typing import Optional, Literal, List
-from uuid import uuid4
+from typing import Optional, List
 
 from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, Field
@@ -26,55 +25,16 @@ import httpx
 from dateutil import parser as dateparser
 from fastapi import Body
 from app.api import strava as strava_api
+from app.models.runs import Run as RunModel, RunCreate, RunTypeEnum, UnitEnum
+from app.services.runs import RunsService
+from fastapi import Depends, Request
 
 # Router metadata
 router = APIRouter(prefix="/runs", tags=["Runs"])  # preserve path for compatibility
+def get_runs_service(request: Request) -> RunsService:
+    return request.app.state.runs_service
 
 M_PER_MI = 1609.344
-
-
-# ---- Models ----
-RunType = Literal["Easy Run", "Workout", "Long Run", "Race"]
-
-
-class RunIn(BaseModel):
-    """Payload for creating/updating a run."""
-
-    title: str = Field(..., description="Short label for the run (e.g., 'Tempo 3x1mi')")
-    description: Optional[str] = Field(
-        default="", description="Freeform notes: conditions, route, splits, etc."
-    )
-    started_at: datetime = Field(..., description="Start datetime (ISO 8601)")
-    distance: float = Field(..., gt=0, description="Distance in the selected unit (> 0)")
-    unit: Literal["mi", "km"] = Field(
-        default="mi", description="Unit for distance and pace calculations"
-    )
-    duration_s: int = Field(..., gt=0, description="Total elapsed time in seconds (> 0)")
-    run_type: RunType = Field(default="Easy Run", description="Categorization of the run")
-
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {
-                    "title": "Easy neighborhood loop",
-                    "description": "Felt good. Kept HR < 150.",
-                    "started_at": "2025-09-10T07:15:00-04:00",
-                    "distance": 5.2,
-                    "unit": "mi",
-                    "duration_s": 2700,
-                    "run_type": "Easy Run",
-                }
-            ]
-        }
-    }
-
-
-class Run(RunIn):
-    """Stored run with server-assigned identifier."""
-
-    id: str = Field(description="Server-generated identifier (hex string)")
-    source: Optional[str] = Field(default=None, description="Source system for the run (e.g., 'strava')")
-    source_ref: Optional[str] = Field(default=None, description="Reference ID in the source system")
 
 
 class CreateRunFromStravaIn(BaseModel):
@@ -86,8 +46,8 @@ class CreateRunFromStravaIn(BaseModel):
     activity_id: int = Field(..., description="Strava activity id to import")
     athlete_id: Optional[int] = Field(None, description="Strava athlete id (optional in dev)")
     title: Optional[str] = Field(None, description="Override the run title; defaults to the Strava activity name")
-    unit: Literal["mi", "km"] = Field("mi", description="Unit for distance")
-    run_type: RunType = Field("Easy Run", description="Categorization of the run")
+    unit: UnitEnum = Field(UnitEnum.mi, description="Unit for distance")
+    run_type: RunTypeEnum = Field(RunTypeEnum.easy, description="Categorization of the run")
 
     model_config = {
         "json_schema_extra": {
@@ -98,49 +58,31 @@ class CreateRunFromStravaIn(BaseModel):
     }
 
 
-# ---- In-memory DB (temporary) ----
-DB: dict[str, Run] = {}
-
-
 # ---- CRUD ----
 @router.post(
     "",
-    response_model=Run,
+    response_model=RunModel,
     status_code=201,
     summary="Create a run",
     response_description="The created run including its generated `id`.",
 )
-def create_run(run: RunIn) -> Run:
-    """Create a new run entry.
-
-    Returns the stored object with a generated `id`.
-    """
-
-    run_id = uuid4().hex
-    obj = Run(id=run_id, **run.model_dump())
-    DB[run_id] = obj
-    return obj
+def create_run(run: RunCreate, svc: RunsService = Depends(get_runs_service)) -> RunModel:
+    return svc.create(run)
 
 
 @router.get(
     "",
-    response_model=List[Run],
+    response_model=List[RunModel],
     summary="List runs",
     response_description="An array of stored runs (order is unspecified).",
 )
-def list_runs() -> List[Run]:
-    """Return all runs currently in the in-memory store.
-
-    NOTE: This is a placeholder; paging and filtering can be added once a real
-    persistence layer exists.
-    """
-
-    return list(DB.values())
+def list_runs(svc: RunsService = Depends(get_runs_service)) -> List[RunModel]:
+    return svc.list_runs()
 
 
 @router.get(
     "/{run_id}",
-    response_model=Run,
+    response_model=RunModel,
     summary="Get a run by id",
     responses={
         404: {
@@ -149,17 +91,16 @@ def list_runs() -> List[Run]:
         }
     },
 )
-def get_run(run_id: str) -> Run:
-    """Fetch a single run by its identifier."""
-
-    if run_id not in DB:
+def get_run(run_id: int, svc: RunsService = Depends(get_runs_service)) -> RunModel:
+    obj = svc.get(run_id)
+    if not obj:
         raise HTTPException(status_code=404, detail="Run not found")
-    return DB[run_id]
+    return obj
 
 
 @router.put(
     "/{run_id}",
-    response_model=Run,
+    response_model=RunModel,
     summary="Update a run by id",
     responses={
         404: {
@@ -168,24 +109,21 @@ def get_run(run_id: str) -> Run:
         }
     },
 )
-def update_run(run_id: str, run: RunIn) -> Run:
-    """Replace a run's fields with the provided payload."""
-
-    if run_id not in DB:
+def update_run(run_id: int, run: RunCreate, svc: RunsService = Depends(get_runs_service)) -> RunModel:
+    obj = svc.update(run_id, run)
+    if not obj:
         raise HTTPException(status_code=404, detail="Run not found")
-    obj = Run(id=run_id, **run.model_dump())
-    DB[run_id] = obj
     return obj
 
 
 @router.post(
     "/from-strava",
-    response_model=Run,
+    response_model=RunModel,
     status_code=201,
     summary="Create a run from a Strava activity",
     response_description="The created run imported from Strava.",
 )
-async def create_run_from_strava(payload: CreateRunFromStravaIn = Body(...)) -> Run:
+async def create_run_from_strava(payload: CreateRunFromStravaIn = Body(...), svc: RunsService = Depends(get_runs_service)) -> RunModel:
     """Import a Strava activity and store it as a run.
 
     This calls Strava's activity detail endpoint using the connected athlete's
@@ -229,7 +167,10 @@ async def create_run_from_strava(payload: CreateRunFromStravaIn = Body(...)) -> 
     else:  # km
         distance = round(distance_m / 1000.0, 3)
 
-    run_in = RunIn(
+    # Elevation in feet if available
+    elev_ft = (act.get("total_elevation_gain") or 0) * 3.28084
+
+    run_in = RunCreate(
         title=name,
         description=description,
         started_at=started_at,
@@ -237,15 +178,12 @@ async def create_run_from_strava(payload: CreateRunFromStravaIn = Body(...)) -> 
         unit=payload.unit,
         duration_s=int(moving_time_s),
         run_type=payload.run_type,
+        elevation_ft=elev_ft,
+        source="strava",
+        source_ref=str(payload.activity_id),
     )
-
-    # Reuse existing creator to get an id and perform uniform validation
-    run_obj = create_run(run_in)
-    # Add source and source_ref to the stored object
-    run_obj.source = "strava"
-    run_obj.source_ref = str(payload.activity_id)
-    DB[run_obj.id] = run_obj
-    return run_obj
+    created = svc.create(run_in)
+    return created
 
 
 @router.delete(
@@ -261,10 +199,9 @@ async def create_run_from_strava(payload: CreateRunFromStravaIn = Body(...)) -> 
         },
     },
 )
-def delete_run(run_id: str) -> Response:
+def delete_run(run_id: int, svc: RunsService = Depends(get_runs_service)) -> Response:
     """Delete a run. Returns 204 No Content on success."""
-
-    if DB.pop(run_id, None) is None:
+    if not svc.get(run_id):
         raise HTTPException(status_code=404, detail="Run not found")
-    # IMPORTANT: return a bare Response (no body) for 204
+    svc.delete(run_id)
     return Response(status_code=204)

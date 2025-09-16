@@ -64,6 +64,17 @@ class RunCreate(BaseModel):
     )
 
     # Optional server-computed conveniences
+    elevation_ft: Optional[float] = Field(
+        default=None, description="Total elevation gain in feet (optional)"
+    )
+    source: Optional[str] = Field(
+        default=None, description="Source system for the run (e.g., 'strava')"
+    )
+    source_ref: Optional[str] = Field(
+        default=None, description="Reference id in the source system"
+    )
+    
+    # Derived values
     pace_s: Optional[int] = Field(
         default=None,
         description="Pace in seconds per unit (derived from distance & duration)",
